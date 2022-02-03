@@ -6,6 +6,7 @@ import {
   BeforeInsert,
   ManyToMany,
   JoinTable,
+  BeforeUpdate,
 } from 'typeorm';
 import { ResourceGroup } from '.';
 
@@ -39,6 +40,7 @@ export class User {
   @JoinTable()
   categories: ResourceGroup[];
 
+  @BeforeUpdate()
   @BeforeInsert()
   async hashPasswordBeforeInsert() {
     this.password = await bcrypt.hash(this.password, 10);
