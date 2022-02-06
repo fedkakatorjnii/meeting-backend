@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/entities';
 import { Repository } from 'typeorm';
+import { validate } from 'class-validator';
 import { CreateUserDto, UpdateUserDto, UserDto } from './dto';
 import { Collection } from './types';
 
@@ -34,11 +35,15 @@ export class UserService {
     };
   }
 
-  async find(id: number): Promise<User> {
+  async findByName(username: string): Promise<User | undefined> {
+    return this.usersRepository.findOne({ username });
+  }
+
+  async find(id: number): Promise<User | undefined> {
     return this.usersRepository.findOne(id);
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
+  async create(createUserDto: CreateUserDto): Promise<User | undefined> {
     const user = new User();
 
     user.username = createUserDto.username;
@@ -48,6 +53,10 @@ export class UserService {
     user.password = createUserDto.password;
     user.categories = createUserDto.categories;
 
+    const errors = await validate(user);
+
+    if (errors.length > 0) throw errors;
+
     return this.usersRepository.save(user);
   }
 
@@ -55,7 +64,7 @@ export class UserService {
     await this.usersRepository.delete(id);
   }
 
-  async update({ id, ...rest }: UpdateUserDto): Promise<User> {
+  async update({ id, ...rest }: UpdateUserDto): Promise<User | undefined> {
     const user = await this.usersRepository.findOne(id);
 
     user.username = rest.username;
@@ -64,6 +73,10 @@ export class UserService {
     user.email = rest.email;
     user.password = rest.password;
     user.categories = rest.categories;
+
+    const errors = await validate(user);
+
+    if (errors.length > 0) throw errors;
 
     return this.usersRepository.save(user);
   }

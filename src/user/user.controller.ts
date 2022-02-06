@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  HttpException,
   HttpStatus,
   Param,
   Post,
@@ -33,13 +34,37 @@ export class UserController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createUserDto: CreateUserDto): Promise<User> {
-    return this.userService.create(createUserDto);
+    try {
+      const user = await this.userService.create(createUserDto);
+
+      return user;
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error,
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
   }
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   async update(@Param('id') id: number, @Body() updateUserDto: CreateUserDto) {
-    return this.userService.update({ ...updateUserDto, id });
+    try {
+      const res = await this.userService.update({ ...updateUserDto, id });
+
+      return res;
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error,
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
   }
 
   @Delete(':id')
