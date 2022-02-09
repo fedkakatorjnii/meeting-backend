@@ -5,5 +5,4 @@ export interface UpdateUserDto {
   lastName: string;
   email: string;
   password: string;
-  categories: any[];
 }

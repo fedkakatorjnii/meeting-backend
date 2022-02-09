@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from 'src/entities';
 import { Repository } from 'typeorm';
 import { validate } from 'class-validator';
+import { Collection, Pagination } from 'src/types';
+import { User } from 'src/entities';
 import { CreateUserDto, UpdateUserDto, UserDto } from './dto';
-import { Collection } from './types';
 
 @Injectable()
 export class UserService {
@@ -13,11 +13,15 @@ export class UserService {
     private readonly usersRepository: Repository<User>,
   ) {}
 
-  async list(): Promise<Collection<User>> {
-    const items = await this.usersRepository.find();
-    const total = await this.usersRepository.count();
-    const page = 0;
-    const size = total;
+  async list(pagination: Pagination): Promise<Collection<User>> {
+    const { _page, _page_size } = pagination;
+
+    const [items, total] = await this.usersRepository.findAndCount({
+      take: _page_size,
+      skip: _page * _page_size,
+    });
+    const page = _page;
+    const size = _page_size;
     const first = null;
     const next = null;
     const previous = null;
@@ -51,7 +55,6 @@ export class UserService {
     user.lastName = createUserDto.lastName;
     user.email = createUserDto.email;
     user.password = createUserDto.password;
-    user.categories = createUserDto.categories;
 
     const errors = await validate(user);
 
@@ -72,7 +75,6 @@ export class UserService {
     user.lastName = rest.lastName;
     user.email = rest.email;
     user.password = rest.password;
-    user.categories = rest.categories;
 
     const errors = await validate(user);
 

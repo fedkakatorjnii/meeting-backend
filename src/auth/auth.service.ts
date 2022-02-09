@@ -4,7 +4,8 @@ import * as bcrypt from 'bcrypt';
 import { UserService } from 'src/user/user.service';
 
 const JWT_ACCESS_TOKEN_SECRET = 'JWT_ACCESS_TOKEN_SECRET';
-const JWT_ACCESS_TOKEN_EXPIRATION_TIME = 60 * 15;
+// const JWT_ACCESS_TOKEN_EXPIRATION_TIME = 60 * 15;
+const JWT_ACCESS_TOKEN_EXPIRATION_TIME = 60 * 60 * 24;
 
 const JWT_REFRESH_TOKEN_SECRET = 'JWT_REFRESH_TOKEN_SECRET';
 const JWT_REFRESH_TOKEN_EXPIRATION_TIME = 60 * 60 * 24;

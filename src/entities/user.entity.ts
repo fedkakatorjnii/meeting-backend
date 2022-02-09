@@ -4,9 +4,8 @@ import {
   Column,
   PrimaryGeneratedColumn,
   BeforeInsert,
-  ManyToMany,
-  JoinTable,
   BeforeUpdate,
+  ManyToOne,
 } from 'typeorm';
 import {
   IsEmail,
@@ -19,7 +18,7 @@ import {
   Matches,
   IsOptional,
 } from 'class-validator';
-import { ResourceGroup } from '.';
+import { Room } from './room.entity';
 
 @Entity()
 export class User {
@@ -90,10 +89,8 @@ export class User {
   @IsDate()
   updatedAt: Date;
 
-  @ManyToMany(() => User)
-  @JoinTable()
-  @IsOptional()
-  categories: ResourceGroup[];
+  @ManyToOne(() => Room, (room) => room.owner)
+  rooms: Room;
 
   @BeforeUpdate()
   @BeforeInsert()

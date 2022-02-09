@@ -9,12 +9,13 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { User } from 'src/entities';
+import { Collection, Pagination } from 'src/types';
 import { CreateUserDto } from './dto';
-import { Collection } from './types';
 import { UserService } from './user.service';
 
 @UseGuards(JwtAuthGuard)
@@ -24,8 +25,13 @@ export class UserController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  async list(): Promise<Collection<User>> {
-    return this.userService.list();
+  async list(@Query() query: Pagination): Promise<Collection<User>> {
+    const { _page, _page_size } = query;
+
+    return this.userService.list({
+      _page: Number(_page),
+      _page_size: Number(_page_size),
+    });
   }
 
   @Get(':id')

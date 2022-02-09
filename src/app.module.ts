@@ -7,7 +7,7 @@ import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { AppService } from './app.service';
-import { User } from './entities';
+import { Room, RoomPermission, User, Geolocation } from './entities';
 
 @Module({
   imports: [
@@ -16,7 +16,9 @@ import { User } from './entities';
       imports: [ConfigModule],
       useFactory: async () =>
         Object.assign(await getConnectionOptions(), {
-          entities: [User],
+          entities: [User, Room, RoomPermission, Geolocation],
+          // TODO разобраться почему не получается подключить все
+          // entities: ['../entities/*.{ts,js}'],
           migrations: ['../migrations/*.{ts,js}'],
         }),
     }),
