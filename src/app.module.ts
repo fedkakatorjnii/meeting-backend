@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { AppService } from './app.service';
 import { Room, RoomPermission, User, Geolocation } from './entities';
+import { RoomModule } from './room/room.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { Room, RoomPermission, User, Geolocation } from './entities';
     }),
     UserModule,
     AuthModule,
+    RoomModule,
   ],
   controllers: [AppController],
   providers: [AppService, ChatGateway],
