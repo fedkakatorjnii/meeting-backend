@@ -5,7 +5,7 @@ import {
   PrimaryGeneratedColumn,
   BeforeInsert,
   BeforeUpdate,
-  ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import {
   IsEmail,
@@ -89,8 +89,8 @@ export class User {
   @IsDate()
   updatedAt: Date;
 
-  @ManyToOne(() => Room, (room) => room.owner)
-  rooms: Room;
+  @OneToMany(() => Room, (room) => room.owner)
+  rooms: Room[];
 
   @BeforeUpdate()
   @BeforeInsert()

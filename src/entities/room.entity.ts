@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { IsString, IsOptional } from 'class-validator';
 import { User } from './user.entity';
 
@@ -20,6 +20,6 @@ export class Room {
   @IsString()
   description: string;
 
-  @OneToMany(() => User, (user) => user.rooms)
+  @ManyToOne(() => User, (user) => user.rooms)
   owner: User;
 }
