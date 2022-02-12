@@ -3,13 +3,6 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserService } from 'src/user/user.service';
 
-const JWT_ACCESS_TOKEN_SECRET = 'JWT_ACCESS_TOKEN_SECRET';
-// const JWT_ACCESS_TOKEN_EXPIRATION_TIME = 60 * 15;
-const JWT_ACCESS_TOKEN_EXPIRATION_TIME = 60 * 60 * 24;
-
-const JWT_REFRESH_TOKEN_SECRET = 'JWT_REFRESH_TOKEN_SECRET';
-const JWT_REFRESH_TOKEN_EXPIRATION_TIME = 60 * 60 * 24;
-
 @Injectable()
 export class AuthService {
   constructor(
@@ -49,12 +42,12 @@ export class AuthService {
 
   async #getTokens(payload: { username: string }) {
     const access_token = this.jwtService.sign(payload, {
-      secret: JWT_ACCESS_TOKEN_SECRET,
-      expiresIn: `${JWT_ACCESS_TOKEN_EXPIRATION_TIME}s`,
+      secret: process.env.JWT_ACCESS_TOKEN_SECRET,
+      expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME,
     });
     const refresh_token = this.jwtService.sign(payload, {
-      secret: JWT_REFRESH_TOKEN_SECRET,
-      expiresIn: `${JWT_REFRESH_TOKEN_EXPIRATION_TIME}s`,
+      secret: process.env.JWT_REFRESH_TOKEN_SECRET,
+      expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME,
     });
 
     return {
