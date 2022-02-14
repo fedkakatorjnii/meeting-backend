@@ -12,6 +12,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { Public } from 'src/auth/constants';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { User } from 'src/entities';
 import { Collection, Pagination } from 'src/types';
@@ -40,6 +41,7 @@ export class UserController {
     return this.userService.find(Number(id));
   }
 
+  @Public()
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(@Body() createUserDto: CreateUserDto): Promise<User> {
