@@ -4,7 +4,7 @@ import { AuthModule } from 'src/auth/auth.module';
 import { User } from 'src/entities';
 import { ChatGateway } from './gateways/chat.gateway';
 import { EventsService } from './events.service';
-import { UserModule } from 'src/user/user.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [

@@ -9,9 +9,14 @@ import { AppService } from './app.service';
 import { Room, RoomPermission, User, Geolocation } from './entities';
 import { RoomModule } from './room/room.module';
 import { EventsModule } from './events/events.module';
+import { SharedModule } from './shared/shared.module';
+import { ChatGateway } from './events/gateways/chat.gateway';
 
 @Module({
   imports: [
+    //
+    SharedModule,
+    //
     ConfigModule.forRoot({
       // isGlobal: true,
     }),
@@ -28,9 +33,16 @@ import { EventsModule } from './events/events.module';
     UserModule,
     AuthModule,
     RoomModule,
+    //
+    // ChatGateway,
     EventsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    //
+    // ChatGateway,
+    // EventsModule,
+  ],
 })
 export class AppModule {}
