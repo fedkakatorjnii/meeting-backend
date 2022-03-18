@@ -2,13 +2,13 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { getConnectionOptions } from 'typeorm';
-import { ChatGateway } from './gateway/chat.gateway';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { AppService } from './app.service';
 import { Room, RoomPermission, User, Geolocation } from './entities';
 import { RoomModule } from './room/room.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -28,8 +28,9 @@ import { RoomModule } from './room/room.module';
     UserModule,
     AuthModule,
     RoomModule,
+    EventsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, ChatGateway],
+  providers: [AppService],
 })
 export class AppModule {}
