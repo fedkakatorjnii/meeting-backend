@@ -2,7 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
 import { IsString, IsOptional } from 'class-validator';
 import { User } from './user.entity';
 
-@Entity()
+@Entity({ name: 'rooms' })
 export class Room {
   @PrimaryGeneratedColumn()
   id: number;
@@ -20,6 +20,6 @@ export class Room {
   @IsString()
   description: string;
 
-  @ManyToOne(() => User, (user) => user.rooms)
+  @ManyToOne(() => User, (user) => user.ownsRooms)
   owner: User;
 }

@@ -6,6 +6,8 @@ import {
   BeforeInsert,
   BeforeUpdate,
   OneToMany,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import {
   IsEmail,
@@ -20,7 +22,7 @@ import {
 } from 'class-validator';
 import { Room } from './room.entity';
 
-@Entity()
+@Entity({ name: 'users' })
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
@@ -89,8 +91,12 @@ export class User {
   @IsDate()
   updatedAt: Date;
 
-  @OneToMany(() => Room, (room) => room.owner)
-  rooms: Room[];
+  @OneToMany(() => Room, (room) => room.owner, { nullable: false })
+  ownsRooms: Room[];
+
+  @ManyToMany(() => Room, { nullable: false })
+  @JoinTable()
+  consistsRooms: Room[];
 
   @BeforeUpdate()
   @BeforeInsert()

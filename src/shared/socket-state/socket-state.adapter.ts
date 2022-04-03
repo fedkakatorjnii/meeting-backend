@@ -25,13 +25,19 @@ export class SocketStateAdapter extends IoAdapter implements WebSocketAdapter {
         const { authorization } = socket.handshake.headers;
         const token = authorization?.replace(/^Berer /, '');
         const user = await this.authService.validateUserToken(token);
+        const { id: userId, username } = user;
 
-        socket.auth = {
-          userId: user.id,
-          username: user.username,
-          rooms: user.rooms.map((room) => room.id),
-          ovners: [],
+        const ownsRooms = user.ownsRooms.map((room) => room.id);
+        const consistsRooms = user.consistsRooms.map((room) => room.id);
+
+        const auth = {
+          userId,
+          username,
+          ownsRooms,
+          consistsRooms,
         };
+
+        socket.auth = auth;
 
         return next();
       } catch (e) {

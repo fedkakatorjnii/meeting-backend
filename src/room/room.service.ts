@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Collection } from 'src/types';
-import { Room } from 'src/entities';
+import { Room, User } from 'src/entities';
 import { CreateRoomDto, UpdateRoomDto } from './dto';
 import { UserService } from 'src/user/user.service';
 import { validate } from 'class-validator';
@@ -80,5 +80,21 @@ export class RoomService {
 
   async remove(id: string): Promise<void> {
     await this.roomRepository.delete(id);
+  }
+
+  async addUserToRoom(userId: number, roomId: number): Promise<User> {
+    const room = await this.roomRepository.findOne(roomId);
+
+    if (!room) throw new Error('Комната не найдена.');
+
+    return this.userService.addUserToRoom(userId, room);
+  }
+
+  async removeUserFromRoom(userId: number, roomId: number): Promise<User> {
+    const room = await this.roomRepository.findOne(roomId);
+
+    if (!room) throw new Error('Комната не найдена.');
+
+    return this.userService.removeUserFromRoom(userId, room);
   }
 }

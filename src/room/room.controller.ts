@@ -12,7 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
-import { Room } from 'src/entities';
+import { Room, User } from 'src/entities';
 import { Collection } from 'src/types';
 import { CreateRoomDto } from './dto';
 import { RoomService } from './room.service';
@@ -74,5 +74,47 @@ export class RoomController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string): Promise<void> {
     return this.roomService.remove(id);
+  }
+
+  @Post(':id/add')
+  @HttpCode(HttpStatus.OK)
+  async addUserToRoom(
+    @Param('id') id,
+    @Body() { userId }: { userId: number },
+  ): Promise<User> {
+    try {
+      const user = await this.roomService.addUserToRoom(userId, id);
+
+      return user;
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error,
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+  }
+
+  @Post(':id/remove')
+  @HttpCode(HttpStatus.OK)
+  async removeUserFromRoom(
+    @Param('id') id: number,
+    @Body() { userId }: { userId: number },
+  ): Promise<User> {
+    try {
+      const user = await this.roomService.removeUserFromRoom(userId, id);
+
+      return user;
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error,
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
   }
 }

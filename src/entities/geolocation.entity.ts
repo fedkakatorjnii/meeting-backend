@@ -8,7 +8,7 @@ import {
 import { IsOptional, IsNumber, IsDate, IsNotEmpty } from 'class-validator';
 import { User } from './user.entity';
 
-@Entity()
+@Entity({ name: 'geolocations' })
 export class Geolocation {
   @PrimaryGeneratedColumn()
   id: number;
