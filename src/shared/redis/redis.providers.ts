@@ -5,8 +5,10 @@ import { RedisClients } from './redis.constants';
 export type RedisClient = Redis.Redis;
 
 const config: RedisOptions = {
-  host: '127.0.0.1',
-  port: 6379,
+  host: process.env.REDIS_HOST,
+  port: Number(process.env.REDIS_PORT),
+  password: process.env.REDIS_PASSWORD,
+  name: process.env.REDIS_NAME,
 };
 
 export const redisProviders: Provider[] = [
