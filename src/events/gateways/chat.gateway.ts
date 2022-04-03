@@ -9,9 +9,11 @@ import {
 import { Logger, UseInterceptors } from '@nestjs/common';
 import { Socket, Server } from 'socket.io';
 import { isPoint } from 'src/common/typeGuards';
-import { EventsService } from '../events.service';
 import { RedisPropagatorInterceptor } from 'src/shared/redis-propagator/redis-propagator.interceptor';
+import { MessageToRoom } from 'src/shared/redis/dto/message-to-room.dto';
 import { AuthenticatedSocket } from 'src/shared/socket-state/types';
+import { isMessageToRoom } from 'src/shared/utils/types';
+import { EventsService } from '../events.service';
 
 @UseInterceptors(RedisPropagatorInterceptor)
 @WebSocketGateway({
@@ -30,15 +32,22 @@ export class ChatGateway
 
   @SubscribeMessage('msgToServer')
   handleMessage(
-    client: Socket,
-    payload: string,
+    client: AuthenticatedSocket,
+    payload: any,
   ): {
     event: 'msgToClient';
-    data: string;
+    data: MessageToRoom;
   } {
+    const data = JSON.parse(payload);
+
+    if (!isMessageToRoom(data)) return;
+
     return {
       event: 'msgToClient',
-      data: payload,
+      data: {
+        ...data,
+        senderId: client.auth.userId,
+      },
     };
   }
 

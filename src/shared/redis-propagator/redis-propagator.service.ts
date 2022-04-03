@@ -40,10 +40,10 @@ export class RedisPropagatorService {
   }
 
   private consumeSendEvent = (eventInfo: RedisSocketEventSendDTO): void => {
-    const { userId, event, data, socketId } = eventInfo;
+    const { event, data } = eventInfo;
 
     return this.socketStateService
-      .get(userId)
+      .getFromRoom(data.room)
       .forEach((socket) => socket.emit(event, data));
   };
 

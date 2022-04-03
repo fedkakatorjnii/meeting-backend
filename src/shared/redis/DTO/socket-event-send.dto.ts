@@ -4,4 +4,6 @@ export class RedisSocketEventSendDTO extends RedisSocketEventEmitDTO {
   public readonly userId: number;
   public readonly socketId: string;
   public readonly username: string;
+  public readonly ownsRooms: number[];
+  public readonly consistsRooms: number[];
 }

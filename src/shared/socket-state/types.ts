@@ -3,8 +3,8 @@ import { Socket, ServerOptions, Server } from 'socket.io';
 interface TokenPayload {
   readonly userId: number;
   readonly username: string;
-  readonly rooms: number[];
-  readonly ovners: number[];
+  readonly ownsRooms: number[];
+  readonly consistsRooms: number[];
 }
 
 export interface AuthenticatedSocket extends Socket {
