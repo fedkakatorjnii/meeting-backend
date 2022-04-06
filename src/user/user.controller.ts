@@ -15,6 +15,7 @@ import {
 import { Public } from 'src/auth/constants';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { User } from 'src/entities';
+import { getPaginationOption } from 'src/shared/utils/pagination';
 import { Collection, Pagination } from 'src/types';
 import { CreateUserDto } from './dto';
 import { UserService } from './user.service';
@@ -27,12 +28,9 @@ export class UserController {
   @Get()
   @HttpCode(HttpStatus.OK)
   async list(@Query() query: Pagination): Promise<Collection<User>> {
-    const { _page, _page_size } = query;
+    const pagination = getPaginationOption(query);
 
-    return this.userService.list({
-      _page: Number(_page),
-      _page_size: Number(_page_size),
-    });
+    return this.userService.list(pagination);
   }
 
   @Get(':id')

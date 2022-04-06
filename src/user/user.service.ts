@@ -5,22 +5,7 @@ import { validate } from 'class-validator';
 import { Collection, Pagination } from 'src/types';
 import { Room, User } from 'src/entities';
 import { CreateUserDto, UpdateUserDto, UserDto } from './dto';
-
-const getTake = (pagination: Pagination) => {
-  const { _page, _page_size } = pagination;
-
-  if (_page < 1 || _page_size < 0) return;
-
-  return _page_size;
-};
-
-const getSkip = (pagination: Pagination) => {
-  const { _page, _page_size } = pagination;
-
-  if (_page < 1 || _page_size < 0) return;
-
-  return (_page - 1) * _page_size;
-};
+import { getPagination } from 'src/shared/utils/pagination';
 
 @Injectable()
 export class UserService {
@@ -29,14 +14,12 @@ export class UserService {
     private readonly usersRepository: Repository<User>,
   ) {}
 
-  async list(pagination: Pagination): Promise<Collection<User>> {
-    const { _page, _page_size } = pagination;
-    const skip = getSkip(pagination);
-    const take = getTake(pagination);
+  async list(query: Partial<Pagination>): Promise<Collection<User>> {
+    const { _page, _page_size } = query;
+    const pagination = getPagination(query);
 
     const [items, total] = await this.usersRepository.findAndCount({
-      take,
-      skip,
+      ...pagination,
       relations: ['ownsRooms', 'consistsRooms'],
     });
     const page = _page;
