@@ -14,6 +14,7 @@ import { MessageToRoom } from 'src/shared/redis/dto/message-to-room.dto';
 import { AuthenticatedSocket } from 'src/shared/socket-state/types';
 import { isMessageToRoom } from 'src/shared/utils/types';
 import { EventsService } from '../events.service';
+import { MessagesService } from 'src/messages/messages.service';
 
 @UseInterceptors(RedisPropagatorInterceptor)
 @WebSocketGateway({
@@ -24,28 +25,41 @@ import { EventsService } from '../events.service';
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  constructor(private eventsService: EventsService) {}
+  constructor(
+    private eventsService: EventsService,
+    private messagesService: MessagesService,
+  ) {}
 
   @WebSocketServer() server: Server;
 
   private logger: Logger = new Logger('ChatGateway');
 
   @SubscribeMessage('msgToServer')
-  handleMessage(
+  async handleMessage(
     client: AuthenticatedSocket,
     payload: any,
-  ): {
+  ): Promise<{
     event: 'msgToClient';
     data: MessageToRoom;
-  } {
-    const data = JSON.parse(payload);
+  }> {
+    let data = payload;
 
-    if (!isMessageToRoom(data)) return;
+    if (typeof payload === 'string') {
+      data = JSON.parse(payload);
+    }
+
+    if (!isMessageToRoom(payload)) return;
+
+    await this.messagesService.create({
+      text: payload.message,
+      ownerId: client.auth.userId,
+      roomId: payload.room,
+    });
 
     return {
       event: 'msgToClient',
       data: {
-        ...data,
+        ...payload,
         senderId: client.auth.userId,
       },
     };
