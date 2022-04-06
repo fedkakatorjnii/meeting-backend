@@ -6,11 +6,12 @@ import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { AppService } from './app.service';
-import { Room, RoomPermission, User, Geolocation } from './entities';
+import { Room, RoomPermission, User, Geolocation, Message } from './entities';
 import { RoomModule } from './room/room.module';
 import { EventsModule } from './events/events.module';
 import { SharedModule } from './shared/shared.module';
 import { ChatGateway } from './events/gateways/chat.gateway';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { ChatGateway } from './events/gateways/chat.gateway';
       imports: [ConfigModule],
       useFactory: async () =>
         Object.assign(await getConnectionOptions(), {
-          entities: [User, Room, RoomPermission, Geolocation],
+          entities: [User, Room, RoomPermission, Geolocation, Message],
           // TODO разобраться почему не получается подключить все
           // entities: ['../entities/*.{ts,js}'],
           migrations: ['../migrations/*.{ts,js}'],
@@ -36,6 +37,7 @@ import { ChatGateway } from './events/gateways/chat.gateway';
     //
     // ChatGateway,
     EventsModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [

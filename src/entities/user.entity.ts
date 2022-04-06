@@ -21,6 +21,7 @@ import {
   IsOptional,
 } from 'class-validator';
 import { Room } from './room.entity';
+import { Message } from './message.entity';
 
 @Entity({ name: 'users' })
 export class User {
@@ -97,6 +98,9 @@ export class User {
   @ManyToMany(() => Room, { nullable: false })
   @JoinTable()
   consistsRooms: Room[];
+
+  @OneToMany(() => Message, (message) => message.owner, { nullable: false })
+  messages: Message[];
 
   @BeforeUpdate()
   @BeforeInsert()

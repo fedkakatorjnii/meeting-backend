@@ -1,6 +1,13 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { IsString, IsOptional } from 'class-validator';
 import { User } from './user.entity';
+import { Message } from './message.entity';
 
 @Entity({ name: 'rooms' })
 export class Room {
@@ -22,4 +29,7 @@ export class Room {
 
   @ManyToOne(() => User, (user) => user.ownsRooms)
   owner: User;
+
+  @OneToMany(() => Message, (message) => message.room, { nullable: false })
+  messages: Message[];
 }
