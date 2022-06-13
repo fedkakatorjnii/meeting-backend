@@ -23,7 +23,7 @@ export class SocketStateAdapter extends IoAdapter implements WebSocketAdapter {
     server.use(async (socket: AuthenticatedSocket, next) => {
       try {
         const { authorization } = socket.handshake.headers;
-        const token = authorization?.replace(/^Berer /, '');
+        const token = authorization?.replace(/^Bearer /, '');
         const user = await this.authService.validateUserToken(token);
         const { id: userId, username } = user;
 
@@ -51,7 +51,11 @@ export class SocketStateAdapter extends IoAdapter implements WebSocketAdapter {
   public bindClientConnect(server: Server, callback): void {
     server.on('connection', (socket: AuthenticatedSocket) => {
       if (socket.auth) {
-        this.socketStateService.add(socket.auth.userId, socket);
+        this.socketStateService.add(
+          socket.auth.userId,
+          socket.data.target,
+          socket,
+        );
 
         socket.on('disconnect', () => {
           this.socketStateService.remove(socket.auth.userId, socket);

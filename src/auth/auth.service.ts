@@ -3,10 +3,11 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { User } from 'src/entities';
 import { UserService } from 'src/user/user.service';
+import { isJWTPayload } from 'src/common/typeGuards';
 
 enum ErrorMessages {
-  invalid_token = 'Неверный токен.',
-  user_not_found = 'Пользователь не найден.',
+  invalidToken = 'Неверный токен.',
+  userNotFound = 'Пользователь не найден.',
 }
 
 @Injectable()
@@ -19,23 +20,28 @@ export class AuthService {
   async getUsernameByToken(token: string) {
     const payload = this.jwtService.decode(token);
 
-    if (typeof payload === 'string' || typeof payload?.username !== 'string') {
-      return null;
-    }
+    if (!isJWTPayload(payload)) return null;
 
-    return payload.username;
+    const { username, exp } = payload;
+
+    const now = new Date().getTime() / 1000;
+    const edge = exp - now;
+
+    if (edge < 0) return null;
+
+    return username;
   }
 
   async validateUserToken(token: string): Promise<User> {
     const username = await this.getUsernameByToken(token);
 
     // if (!username) return null;
-    if (!username) throw new Error(ErrorMessages.invalid_token);
+    if (!username) throw new Error(ErrorMessages.invalidToken);
 
     const user = await this.validateUserUsername(username);
 
     // if (!user) return null;
-    if (!user) throw new Error(ErrorMessages.user_not_found);
+    if (!user) throw new Error(ErrorMessages.userNotFound);
 
     return user;
   }

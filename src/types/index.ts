@@ -13,3 +13,9 @@ export interface Pagination {
   _page: number;
   _page_size: number;
 }
+
+export interface jwtPayload {
+  username: string;
+  iat: number;
+  exp: number;
+}
