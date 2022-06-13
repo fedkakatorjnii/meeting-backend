@@ -9,12 +9,12 @@ import {
 import { Logger, UseInterceptors } from '@nestjs/common';
 import { Socket, Server } from 'socket.io';
 import { RedisPropagatorInterceptor } from 'src/shared/redis-propagator/redis-propagator.interceptor';
-import { MessageToRoom } from 'src/shared/redis/dto/message-to-room.dto';
 import { AuthenticatedSocket } from 'src/shared/socket-state/types';
-import { isAnonMessageToRoom } from 'src/shared/utils/is-message-to-room';
 import { EventsService } from '../events.service';
-import { MessagesService } from 'src/messages/messages.service';
+import { GeolocationMessate } from 'src/shared/redis/dto/geolocation.dto';
 import { RedisSocketEventNames } from 'src/shared/redis-propagator/redis-propagator.constants';
+import { isAnonGeolocation } from 'src/shared/utils/is-geolocation';
+import { GeolocationService } from 'src/geolocation/geolocation.service';
 
 @UseInterceptors(RedisPropagatorInterceptor)
 @WebSocketGateway({
@@ -22,53 +22,49 @@ import { RedisSocketEventNames } from 'src/shared/redis-propagator/redis-propaga
     origin: '*',
   },
 })
-export class ChatGateway
+export class GeolocationGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   constructor(
     private eventsService: EventsService,
-    private messagesService: MessagesService,
+    private geolocationService: GeolocationService,
   ) {}
 
   @WebSocketServer() server: Server;
 
-  private logger: Logger = new Logger('ChatGateway');
+  private logger: Logger = new Logger('GeolocationGateway');
 
-  @SubscribeMessage('msgToServer')
-  async handleMessage(
+  @SubscribeMessage('geolocationToServer')
+  handleGeolocation(
     client: AuthenticatedSocket,
     payload: any,
-  ): Promise<{
+  ): {
     target: RedisSocketEventNames;
-    event: 'msgToClient';
-    data: MessageToRoom;
-  }> {
-    let data = payload;
+    event: 'geolocationToClient';
+    data: GeolocationMessate;
+  } {
+    try {
+      let data = payload;
 
-    if (typeof payload === 'string') {
-      data = JSON.parse(payload);
-    }
+      if (typeof payload === 'string') {
+        data = JSON.parse(payload);
+      }
 
-    if (!isAnonMessageToRoom(data)) return;
+      if (!isAnonGeolocation(data)) return;
 
-    await this.messagesService.create({
-      text: data.message,
-      ownerId: client.auth.userId,
-      roomId: data.room,
-    });
-
-    return {
-      target: RedisSocketEventNames.chat,
-      event: 'msgToClient',
-      data: {
-        ...data,
-        senderId: client.auth.userId,
-      },
-    };
+      return {
+        target: RedisSocketEventNames.geolocation,
+        event: 'geolocationToClient',
+        data: {
+          ...data,
+          senderId: client.auth.userId,
+        },
+      };
+    } catch (error) {}
   }
 
   afterInit(server: Server) {
-    this.logger.log('Init');
+    this.logger.log('Geolocation Init');
   }
 
   handleDisconnect(client: Socket) {
@@ -78,9 +74,8 @@ export class ChatGateway
   async handleConnection(socket: AuthenticatedSocket, ...args: any[]) {
     socket.data = {
       ...socket.data,
-      target: RedisSocketEventNames.chat,
+      target: RedisSocketEventNames.geolocation,
     };
-
     try {
       this.logger.log(
         `User ${socket.auth.username} (${socket.auth.userId}) has been connected.`,

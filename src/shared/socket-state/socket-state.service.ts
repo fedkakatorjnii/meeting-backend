@@ -4,51 +4,72 @@ import { AuthenticatedSocket } from './types';
 
 @Injectable()
 export class SocketStateService {
-  private socketState = new Map<number, AuthenticatedSocket[]>();
+  private socketState = new Map<
+    number,
+    Record<string, AuthenticatedSocket[]>
+  >();
 
   public remove(userId: number, socket: Socket): boolean {
-    const existingSockets = this.socketState.get(userId);
+    const gateways = this.socketState.get(userId) || {};
 
-    if (!existingSockets) {
-      return true;
+    if (!gateways) return true;
+
+    for (const name in gateways) {
+      gateways[name] = gateways[name].filter((s) => s.id !== socket.id);
     }
 
-    const sockets = existingSockets.filter((s) => s.id !== socket.id);
-
-    if (!sockets.length) {
-      this.socketState.delete(userId);
-    } else {
-      this.socketState.set(userId, sockets);
-    }
+    this.socketState.set(userId, gateways);
 
     return true;
   }
 
-  public add(userId: number, socket: AuthenticatedSocket): boolean {
-    const existingSockets = this.socketState.get(userId) || [];
+  public add(
+    userId: number,
+    name: string,
+    socket: AuthenticatedSocket,
+  ): boolean {
+    const gateways = this.socketState.get(userId) || {};
 
-    const sockets = [...existingSockets, socket];
+    gateways[name] = gateways[name] || [];
 
-    this.socketState.set(userId, sockets);
+    gateways[name].push(socket);
+
+    this.socketState.set(userId, gateways);
 
     return true;
   }
 
-  public get(userId: number): AuthenticatedSocket[] {
-    return this.socketState.get(userId) || [];
+  public get(userId: number, name: string): AuthenticatedSocket[] {
+    const gateways = this.socketState.get(userId) || {};
+
+    return gateways[name] || [];
   }
 
-  public getFromRoom(roomId: number): AuthenticatedSocket[] {
+  public getFromRoom(roomId: number, name: string): AuthenticatedSocket[] {
     const res: AuthenticatedSocket[] = [];
 
-    this.socketState.forEach((sockets) =>
+    this.socketState.forEach((gateways) => {
+      const sockets = gateways[name] || [];
+
       res.push(
         ...sockets.filter(
           ({ auth: { consistsRooms, ownsRooms } }) =>
             consistsRooms.includes(roomId) || ownsRooms.includes(roomId),
         ),
-      ),
-    );
+      );
+    });
+
+    return res;
+  }
+
+  getFromGateway(name: string): AuthenticatedSocket[] {
+    const res: AuthenticatedSocket[] = [];
+
+    this.socketState.forEach((gateways) => {
+      const sockets = gateways[name] || [];
+
+      res.push(...sockets);
+    });
 
     return res;
   }
@@ -56,7 +77,11 @@ export class SocketStateService {
   public getAll(): Socket[] {
     const all = [];
 
-    this.socketState.forEach((sockets) => all.push(sockets));
+    this.socketState.forEach((gateways) => {
+      for (const name in gateways) {
+        all.push(gateways[name] || []);
+      }
+    });
 
     return all;
   }

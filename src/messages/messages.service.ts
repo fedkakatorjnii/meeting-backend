@@ -39,6 +39,7 @@ export class MessagesService {
 
     return room;
   }
+
   async list(
     query: Partial<PaginatedListMessageDto>,
   ): Promise<Collection<Message>> {
@@ -46,7 +47,7 @@ export class MessagesService {
     const pagination = getPagination(query);
 
     const owner = this.#getUserById(ownerId);
-    const room = this.#getUserById(roomId);
+    const room = this.#getRoomById(roomId);
 
     const [items, total] = await this.messageRepository.findAndCount({
       ...pagination,

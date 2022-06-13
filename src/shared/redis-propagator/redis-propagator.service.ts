@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { tap } from 'rxjs/operators';
 import { Server } from 'socket.io';
 
+import { isMessageToRoom } from '../utils/is-message-to-room';
+import { isGeolocation } from '../utils/is-geolocation';
 import { RedisService } from '../redis/redis.service';
 import { SocketStateService } from '../socket-state/socket-state.service';
-
-import { RedisSocketEventEmitDTO } from '../redis/dto/socket-event-emit.dto';
 import { RedisSocketEventSendDTO } from '../redis/dto/socket-event-send.dto';
 import { RedisSocketEventNames } from './redis-propagator.constants';
 
@@ -18,18 +18,13 @@ export class RedisPropagatorService {
     private readonly redisService: RedisService,
   ) {
     this.redisService
-      .fromEvent(RedisSocketEventNames.sendName)
-      .pipe(tap(this.consumeSendEvent))
+      .fromEvent(RedisSocketEventNames.chat)
+      .pipe(tap(this.consumeChatEvent))
       .subscribe();
 
     this.redisService
-      .fromEvent(RedisSocketEventNames.emitAllName)
-      .pipe(tap(this.consumeEmitToAllEvent))
-      .subscribe();
-
-    this.redisService
-      .fromEvent(RedisSocketEventNames.emitAuthenticatedName)
-      .pipe(tap(this.consumeEmitToAuthenticatedEvent))
+      .fromEvent(RedisSocketEventNames.geolocation)
+      .pipe(tap(this.consumeGeolocationEvent))
       .subscribe();
   }
 
@@ -39,51 +34,42 @@ export class RedisPropagatorService {
     return this;
   }
 
-  private consumeSendEvent = (eventInfo: RedisSocketEventSendDTO): void => {
+  private consumeChatEvent = (eventInfo: RedisSocketEventSendDTO): void => {
     const { event, data } = eventInfo;
 
+    if (!isMessageToRoom(data)) return;
+
     return this.socketStateService
-      .getFromRoom(data.room)
+      .getFromRoom(data.room, RedisSocketEventNames.chat)
       .forEach((socket) => socket.emit(event, data));
   };
 
-  private consumeEmitToAllEvent = (
-    eventInfo: RedisSocketEventEmitDTO,
-  ): void => {
-    this.socketServer.emit(eventInfo.event, eventInfo.data);
-  };
-
-  private consumeEmitToAuthenticatedEvent = (
-    eventInfo: RedisSocketEventEmitDTO,
+  private consumeGeolocationEvent = (
+    eventInfo: RedisSocketEventSendDTO,
   ): void => {
     const { event, data } = eventInfo;
 
+    if (!isGeolocation(data)) return;
+
     return this.socketStateService
-      .getAll()
+      .getFromGateway(RedisSocketEventNames.geolocation)
       .forEach((socket) => socket.emit(event, data));
   };
 
-  public propagateEvent(eventInfo: RedisSocketEventSendDTO): boolean {
-    if (!eventInfo.userId) {
-      return false;
-    }
+  public propagateChatEvent(eventInfo: RedisSocketEventSendDTO): boolean {
+    if (!eventInfo.userId) return false;
 
-    this.redisService.publish(RedisSocketEventNames.sendName, eventInfo);
+    this.redisService.publish(RedisSocketEventNames.chat, eventInfo);
 
     return true;
   }
 
-  public emitToAuthenticated(eventInfo: RedisSocketEventEmitDTO): boolean {
-    this.redisService.publish(
-      RedisSocketEventNames.emitAuthenticatedName,
-      eventInfo,
-    );
+  public propagateGeolocationEvent(
+    eventInfo: RedisSocketEventSendDTO,
+  ): boolean {
+    if (!eventInfo.userId) return false;
 
-    return true;
-  }
-
-  public emitToAll(eventInfo: RedisSocketEventEmitDTO): boolean {
-    this.redisService.publish(RedisSocketEventNames.emitAllName, eventInfo);
+    this.redisService.publish(RedisSocketEventNames.geolocation, eventInfo);
 
     return true;
   }
