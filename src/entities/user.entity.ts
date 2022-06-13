@@ -22,6 +22,7 @@ import {
 } from 'class-validator';
 import { Room } from './room.entity';
 import { Message } from './message.entity';
+import { Geolocation } from './geolocation.entity';
 
 @Entity({ name: 'users' })
 export class User {
@@ -101,6 +102,11 @@ export class User {
 
   @OneToMany(() => Message, (message) => message.owner, { nullable: false })
   messages: Message[];
+
+  @OneToMany(() => Geolocation, (geolocation) => geolocation.owner, {
+    nullable: false,
+  })
+  geolocations: Geolocation[];
 
   @BeforeUpdate()
   @BeforeInsert()

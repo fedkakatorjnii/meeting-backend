@@ -2,11 +2,12 @@ import {
   Entity,
   Column,
   PrimaryGeneratedColumn,
-  OneToOne,
   JoinColumn,
+  ManyToOne,
 } from 'typeorm';
-import { IsOptional, IsNumber, IsDate, IsNotEmpty } from 'class-validator';
+import { IsOptional, IsDate, IsNotEmpty } from 'class-validator';
 import { User } from './user.entity';
+import { Point } from 'geojson';
 
 @Entity({ name: 'geolocations' })
 export class Geolocation {
@@ -19,7 +20,7 @@ export class Geolocation {
     srid: 4326,
   })
   @IsNotEmpty()
-  point: string;
+  point: Point;
 
   @Column({
     nullable: false,
@@ -30,9 +31,8 @@ export class Geolocation {
   @IsDate()
   date: Date;
 
-  @OneToOne(() => User)
+  @ManyToOne(() => User, (user) => user.geolocations)
   @JoinColumn()
   @IsNotEmpty()
-  @IsNumber()
-  user: User;
+  owner: User;
 }

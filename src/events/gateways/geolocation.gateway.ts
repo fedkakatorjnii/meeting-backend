@@ -52,6 +52,11 @@ export class GeolocationGateway
 
       if (!isAnonGeolocation(data)) return;
 
+      const geolocation = this.geolocationService.create({
+        coordinates: data.message,
+        userId: client.auth.userId,
+      });
+
       return {
         target: RedisSocketEventNames.geolocation,
         event: 'geolocationToClient',

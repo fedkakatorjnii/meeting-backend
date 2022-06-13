@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { getConnectionOptions } from 'typeorm';
+
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
@@ -10,14 +11,12 @@ import { Room, RoomPermission, User, Geolocation, Message } from './entities';
 import { RoomModule } from './room/room.module';
 import { EventsModule } from './events/events.module';
 import { SharedModule } from './shared/shared.module';
-import { ChatGateway } from './events/gateways/chat.gateway';
 import { MessagesModule } from './messages/messages.module';
+import { GeolocationModule } from './geolocation/geolocation.module';
 
 @Module({
   imports: [
-    //
     SharedModule,
-    //
     ConfigModule.forRoot({
       // isGlobal: true,
     }),
@@ -34,17 +33,11 @@ import { MessagesModule } from './messages/messages.module';
     UserModule,
     AuthModule,
     RoomModule,
-    //
-    // ChatGateway,
     EventsModule,
     MessagesModule,
+    GeolocationModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    //
-    // ChatGateway,
-    // EventsModule,
-  ],
+  providers: [AppService],
 })
 export class AppModule {}

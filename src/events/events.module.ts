@@ -7,12 +7,14 @@ import { GeolocationGateway } from './gateways/geolocation.gateway';
 import { EventsService } from './events.service';
 import { UserModule } from '../user/user.module';
 import { MessagesModule } from 'src/messages/messages.module';
+import { GeolocationModule } from 'src/geolocation/geolocation.module';
 
 @Module({
   imports: [
     forwardRef(() => AuthModule),
     forwardRef(() => UserModule),
     MessagesModule,
+    GeolocationModule,
     TypeOrmModule.forFeature([User]),
   ],
   providers: [ChatGateway, GeolocationGateway, EventsService],

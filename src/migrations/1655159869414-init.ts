@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class init1649240356942 implements MigrationInterface {
-  name = 'init1649240356942';
+export class init1655159869414 implements MigrationInterface {
+  name = 'init1655159869414';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
@@ -14,7 +14,7 @@ export class init1649240356942 implements MigrationInterface {
       `CREATE TABLE "users" ("id" SERIAL NOT NULL, "username" character varying NOT NULL, "firstName" character varying, "lastName" character varying, "email" character varying NOT NULL, "isActive" boolean NOT NULL DEFAULT false, "isSuperuser" boolean NOT NULL DEFAULT false, "password" text NOT NULL, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_fe0bb3f6520ee0469504521e710" UNIQUE ("username"), CONSTRAINT "PK_a3ffb1c0c8416b9fc6f907b7433" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
-      `CREATE TABLE "geolocations" ("id" SERIAL NOT NULL, "point" geometry(Point,4326) NOT NULL, "date" TIMESTAMP NOT NULL DEFAULT now(), "userId" integer, CONSTRAINT "REL_ef002e16f5814d6ff44655bac9" UNIQUE ("userId"), CONSTRAINT "PK_371073cff743747b0e8269d3932" PRIMARY KEY ("id"))`,
+      `CREATE TABLE "geolocations" ("id" SERIAL NOT NULL, "point" geometry(Point,4326) NOT NULL, "date" TIMESTAMP NOT NULL DEFAULT now(), "ownerId" integer, CONSTRAINT "PK_371073cff743747b0e8269d3932" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
       `CREATE TABLE "room_permission" ("id" SERIAL NOT NULL, "name" character varying NOT NULL, "description" character varying NOT NULL, "permission" integer NOT NULL DEFAULT '1', "userId" integer, "roomId" integer, CONSTRAINT "UQ_79b82ecb20b7a1afd4919fb11e8" UNIQUE ("name"), CONSTRAINT "REL_d1de36345ac73962c50540e6f4" UNIQUE ("userId"), CONSTRAINT "REL_95d536a5c4eefc413744e2de9a" UNIQUE ("roomId"), CONSTRAINT "PK_b3f262771d1ca6b16b5d8b25250" PRIMARY KEY ("id"))`,
@@ -38,7 +38,7 @@ export class init1649240356942 implements MigrationInterface {
       `ALTER TABLE "rooms" ADD CONSTRAINT "FK_383ac461c63dd52c22ba73a6624" FOREIGN KEY ("ownerId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
-      `ALTER TABLE "geolocations" ADD CONSTRAINT "FK_ef002e16f5814d6ff44655bac91" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
+      `ALTER TABLE "geolocations" ADD CONSTRAINT "FK_69d79a8666ce3fee8ef11e206b0" FOREIGN KEY ("ownerId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
     );
     await queryRunner.query(
       `ALTER TABLE "room_permission" ADD CONSTRAINT "FK_d1de36345ac73962c50540e6f48" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`,
@@ -68,7 +68,7 @@ export class init1649240356942 implements MigrationInterface {
       `ALTER TABLE "room_permission" DROP CONSTRAINT "FK_d1de36345ac73962c50540e6f48"`,
     );
     await queryRunner.query(
-      `ALTER TABLE "geolocations" DROP CONSTRAINT "FK_ef002e16f5814d6ff44655bac91"`,
+      `ALTER TABLE "geolocations" DROP CONSTRAINT "FK_69d79a8666ce3fee8ef11e206b0"`,
     );
     await queryRunner.query(
       `ALTER TABLE "rooms" DROP CONSTRAINT "FK_383ac461c63dd52c22ba73a6624"`,
