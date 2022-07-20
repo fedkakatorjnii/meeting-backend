@@ -33,6 +33,14 @@ export class GeolocationService {
     return user;
   }
 
+  async #getUserByUserName(username: string) {
+    const user = await this.userService.findByName(username);
+
+    if (!user) throw new Error(ErrorMessages.USER_NOT_FOUND);
+
+    return user;
+  }
+
   async list(
     query: Partial<PaginatedListGeolocationDto>,
   ): Promise<Collection<Geolocation>> {

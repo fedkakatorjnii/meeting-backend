@@ -1,14 +1,8 @@
 import {
-  Body,
   Controller,
-  Delete,
   Get,
   HttpCode,
-  HttpException,
   HttpStatus,
-  Param,
-  Post,
-  Put,
   UseGuards,
   Query,
 } from '@nestjs/common';

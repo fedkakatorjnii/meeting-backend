@@ -32,6 +32,14 @@ export class MessagesService {
     return user;
   }
 
+  async #getUserByUserName(username: string) {
+    const user = await this.userService.findByName(username);
+
+    if (!user) throw new Error(ErrorMessages.USER_NOT_FOUND);
+
+    return user;
+  }
+
   async #getRoomById(roomId: number) {
     const room = await this.roomService.find(roomId);
 

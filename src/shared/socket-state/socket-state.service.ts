@@ -9,7 +9,7 @@ export class SocketStateService {
     Record<string, AuthenticatedSocket[]>
   >();
 
-  public remove(userId: number, socket: Socket): boolean {
+  remove(userId: number, socket: Socket): boolean {
     const gateways = this.socketState.get(userId) || {};
 
     if (!gateways) return true;
@@ -23,11 +23,7 @@ export class SocketStateService {
     return true;
   }
 
-  public add(
-    userId: number,
-    name: string,
-    socket: AuthenticatedSocket,
-  ): boolean {
+  add(userId: number, name: string, socket: AuthenticatedSocket): boolean {
     const gateways = this.socketState.get(userId) || {};
 
     gateways[name] = gateways[name] || [];
@@ -39,13 +35,13 @@ export class SocketStateService {
     return true;
   }
 
-  public get(userId: number, name: string): AuthenticatedSocket[] {
+  get(userId: number, name: string): AuthenticatedSocket[] {
     const gateways = this.socketState.get(userId) || {};
 
     return gateways[name] || [];
   }
 
-  public getFromRoom(roomId: number, name: string): AuthenticatedSocket[] {
+  getFromRoom(roomId: number, name: string): AuthenticatedSocket[] {
     const res: AuthenticatedSocket[] = [];
 
     this.socketState.forEach((gateways) => {
@@ -74,7 +70,7 @@ export class SocketStateService {
     return res;
   }
 
-  public getAll(): Socket[] {
+  getAll(): Socket[] {
     const all = [];
 
     this.socketState.forEach((gateways) => {

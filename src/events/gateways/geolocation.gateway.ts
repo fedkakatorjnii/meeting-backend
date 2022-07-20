@@ -82,9 +82,7 @@ export class GeolocationGateway
       target: RedisSocketEventNames.geolocation,
     };
     try {
-      this.logger.log(
-        `User ${socket.auth.username} (${socket.auth.userId}) has been connected.`,
-      );
+      this.logger.log(`User ${socket.auth.username} has been connected.`);
     } catch (error) {
       socket.disconnect();
     }
