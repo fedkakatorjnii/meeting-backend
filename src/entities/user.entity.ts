@@ -2,12 +2,12 @@ import * as bcrypt from 'bcrypt';
 import {
   Entity,
   Column,
-  PrimaryGeneratedColumn,
   BeforeInsert,
   BeforeUpdate,
   OneToMany,
   ManyToMany,
   JoinTable,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import {
   IsEmail,
@@ -17,8 +17,8 @@ import {
   IsString,
   MinLength,
   MaxLength,
-  Matches,
   IsOptional,
+  Matches,
 } from 'class-validator';
 import { Room } from './room.entity';
 import { Message } from './message.entity';
@@ -32,7 +32,6 @@ export class User {
   @Column({
     unique: true,
   })
-  @IsOptional()
   @IsString()
   username: string;
 
@@ -59,6 +58,11 @@ export class User {
   @IsOptional()
   @IsBoolean()
   isActive: boolean;
+
+  @Column({ default: false })
+  @IsOptional()
+  @IsBoolean()
+  isDeleted: boolean;
 
   @Column({ default: false })
   @IsOptional()
