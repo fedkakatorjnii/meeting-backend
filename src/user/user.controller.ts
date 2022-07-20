@@ -36,7 +36,13 @@ export class UserController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   async find(@Param('id') id: string): Promise<User> {
-    return this.userService.find(Number(id));
+    const userId = Number(id);
+
+    if (Number.isNaN(userId)) {
+      return this.userService.findByName(id);
+    }
+
+    return this.userService.find(userId);
   }
 
   @Public()
@@ -79,6 +85,17 @@ export class UserController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string): Promise<void> {
-    return this.userService.remove(id);
+    try {
+      const userId = Number(id);
+
+      if (Number.isNaN(userId)) {
+        // TODO
+        throw new Error('Не корректный идентификатор пользователя.');
+      }
+
+      return this.userService.remove(userId);
+    } catch (error) {
+      //TODO
+    }
   }
 }

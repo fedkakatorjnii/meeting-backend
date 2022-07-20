@@ -72,10 +72,6 @@ export class UserService {
     return this.usersRepository.save(user);
   }
 
-  async remove(id: string): Promise<void> {
-    await this.usersRepository.delete(id);
-  }
-
   async update({ id, ...rest }: UpdateUserDto): Promise<User | undefined> {
     const user = await this.usersRepository.findOne(id);
 
@@ -92,12 +88,23 @@ export class UserService {
     return this.usersRepository.save(user);
   }
 
+  async addUserByUserNameToRoom(username: string, room: Room): Promise<User> {
+    const user = await this.findByName(username);
+
+    if (user.consistsRooms.find((item) => item.id === room.id)) {
+      // TODO подумать над обработкой ошибок
+      return user;
+    }
+
+    user.consistsRooms.push(room);
+
+    return this.usersRepository.save(user);
+  }
+
   async addUserToRoom(userId: number, room: Room): Promise<User> {
     const user = await this.usersRepository.findOne(userId, {
       relations: ['consistsRooms'],
     });
-
-    console.log('user.consistsRooms', user.consistsRooms);
 
     if (user.consistsRooms.find((item) => item.id === room.id)) {
       // TODO подумать над обработкой ошибок
@@ -113,8 +120,6 @@ export class UserService {
     const user = await this.usersRepository.findOne(userId, {
       relations: ['consistsRooms'],
     });
-
-    console.log('user.consistsRooms', user.consistsRooms);
 
     if (!user.consistsRooms.find((item) => item.id === room.id)) {
       // TODO подумать над обработкой ошибок
@@ -134,5 +139,27 @@ export class UserService {
 
   async superuser(id: Pick<UserDto, 'id'>, isSuperuser: boolean) {
     return this.usersRepository.update(id, { isSuperuser });
+  }
+
+  async remove(id: number) {
+    await this.usersRepository.update(id, { isDeleted: true });
+  }
+
+  async removeByName(username: string) {
+    const user = await this.findByName(username);
+
+    await this.usersRepository.update(user, { isDeleted: true });
+  }
+
+  async recover(id: number): Promise<User> {
+    await this.usersRepository.update(id, { isDeleted: false });
+
+    return this.find(id);
+  }
+
+  async recoverByName(username: string): Promise<User> {
+    await this.findByName(username);
+
+    return this.findByName(username);
   }
 }
