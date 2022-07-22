@@ -15,7 +15,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       password,
     );
 
-    if (!user) throw new UnauthorizedException();
+    if (!user) throw new UnauthorizedException('Необходимо авторизоваться.');
 
     return user;
   }
