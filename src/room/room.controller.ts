@@ -14,8 +14,37 @@ import {
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { Room, User } from 'src/entities';
 import { Collection } from 'src/types';
-import { CreateRoomDto } from './dto';
+import { CreateRoomDto, UpdateRoomDto } from './dto';
 import { RoomService } from './room.service';
+
+enum ErrorRoomsCreate {
+  general = 'Ошибка создания комнаты.',
+}
+
+enum ErrorRoomsFind {
+  general = 'Не удалось получить комнаты.',
+}
+
+enum ErrorRoomsList {
+  general = 'Не удалось получить список комнат.',
+}
+
+enum ErrorRoomsUpdate {
+  general = 'Ошибка изменения комнаты.',
+}
+
+enum ErrorRoomsRemove {
+  general = 'Не удалось удалить комнаты.',
+  invalidId = 'Не корректный идентификатор комнат.',
+}
+
+enum ErrorRoomsAddUserToRoom {
+  general = 'Ошибка добавления пользователя в комнату.',
+}
+
+enum ErrorRoomsRemoveUserFromRoom {
+  general = 'Ошибка удаления пользователя из комнаты.',
+}
 
 @UseGuards(JwtAuthGuard)
 @Controller('api/rooms')
@@ -25,13 +54,33 @@ export class RoomController {
   @Get()
   @HttpCode(HttpStatus.OK)
   async list(): Promise<Collection<Room>> {
-    return this.roomService.list();
+    try {
+      return this.roomService.list();
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: ErrorRoomsList.general,
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   async find(@Param('id') id: string): Promise<Room> {
-    return this.roomService.find(Number(id));
+    try {
+      return this.roomService.find(Number(id));
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: ErrorRoomsFind.general,
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
   }
 
   @Post()
@@ -45,7 +94,7 @@ export class RoomController {
       throw new HttpException(
         {
           status: HttpStatus.FORBIDDEN,
-          error,
+          error: ErrorRoomsCreate.general,
         },
         HttpStatus.FORBIDDEN,
       );
@@ -54,7 +103,7 @@ export class RoomController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  async update(@Param('id') id: number, @Body() updateRoomDto: CreateRoomDto) {
+  async update(@Param('id') id: number, @Body() updateRoomDto: UpdateRoomDto) {
     try {
       const res = await this.roomService.update({ ...updateRoomDto, id });
 
@@ -63,7 +112,7 @@ export class RoomController {
       throw new HttpException(
         {
           status: HttpStatus.FORBIDDEN,
-          error,
+          error: ErrorRoomsUpdate.general,
         },
         HttpStatus.FORBIDDEN,
       );
@@ -73,7 +122,17 @@ export class RoomController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string): Promise<void> {
-    return this.roomService.remove(id);
+    try {
+      return this.roomService.remove(id);
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: ErrorRoomsRemove.general,
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
   }
 
   @Post(':id/add')
@@ -90,7 +149,7 @@ export class RoomController {
       throw new HttpException(
         {
           status: HttpStatus.FORBIDDEN,
-          error,
+          error: ErrorRoomsAddUserToRoom,
         },
         HttpStatus.FORBIDDEN,
       );
@@ -111,7 +170,7 @@ export class RoomController {
       throw new HttpException(
         {
           status: HttpStatus.FORBIDDEN,
-          error,
+          error: ErrorRoomsRemoveUserFromRoom,
         },
         HttpStatus.FORBIDDEN,
       );

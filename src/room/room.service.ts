@@ -7,6 +7,11 @@ import { CreateRoomDto, UpdateRoomDto } from './dto';
 import { UserService } from 'src/user/user.service';
 import { validate } from 'class-validator';
 
+enum ErrorMessages {
+  notValidUserMessage = 'Не валидный пользователь.',
+  notFoundRoom = 'Комната не найдена.',
+}
+
 @Injectable()
 export class RoomService {
   constructor(
@@ -52,6 +57,8 @@ export class RoomService {
     const room = new Room();
     const owner = await this.userService.find(createRoomDto.owner);
 
+    if (!owner) throw new Error(ErrorMessages.notValidUserMessage);
+
     room.name = createRoomDto.name;
     room.description = createRoomDto.description;
     room.owner = owner;
@@ -66,6 +73,8 @@ export class RoomService {
   async update({ id, ...rest }: UpdateRoomDto): Promise<Room | undefined> {
     const room = await this.roomRepository.findOne(id);
     const owner = await this.userService.find(rest.owner);
+
+    if (!owner) throw new Error(ErrorMessages.notValidUserMessage);
 
     room.name = rest.name;
     room.description = rest.description;
@@ -85,7 +94,7 @@ export class RoomService {
   async addUserToRoom(userId: number, roomId: number): Promise<User> {
     const room = await this.roomRepository.findOne(roomId);
 
-    if (!room) throw new Error('Комната не найдена.');
+    if (!room) throw new Error(ErrorMessages.notFoundRoom);
 
     return this.userService.addUserToRoom(userId, room);
   }
@@ -93,7 +102,7 @@ export class RoomService {
   async removeUserFromRoom(userId: number, roomId: number): Promise<User> {
     const room = await this.roomRepository.findOne(roomId);
 
-    if (!room) throw new Error('Комната не найдена.');
+    if (!room) throw new Error();
 
     return this.userService.removeUserFromRoom(userId, room);
   }

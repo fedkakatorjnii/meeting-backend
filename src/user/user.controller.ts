@@ -20,6 +20,27 @@ import { Collection, Pagination } from 'src/types';
 import { CreateUserDto } from './dto';
 import { UserService } from './user.service';
 
+enum ErrorMessagesCreate {
+  general = 'Ошибка создания пользователя.',
+}
+
+enum ErrorMessagesFind {
+  general = 'Не удалось получить пользователя.',
+}
+
+enum ErrorMessagesList {
+  general = 'Не удалось получить список пользователей.',
+}
+
+enum ErrorMessagesUpdate {
+  general = 'Ошибка изменения пользователя.',
+}
+
+enum ErrorMessagesRemove {
+  general = 'Не удалось удалить пользователя.',
+  invalidId = 'Не корректный идентификатор пользователя.',
+}
+
 @UseGuards(JwtAuthGuard)
 @Controller('api/users')
 export class UserController {
@@ -28,21 +49,35 @@ export class UserController {
   @Get()
   @HttpCode(HttpStatus.OK)
   async list(@Query() query: Pagination): Promise<Collection<User>> {
-    const pagination = getPaginationOption(query);
+    try {
+      const pagination = getPaginationOption(query);
 
-    return this.userService.list(pagination);
+      return this.userService.list(pagination);
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: ErrorMessagesList.general,
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   async find(@Param('id') id: string): Promise<User> {
-    const userId = Number(id);
-
-    if (Number.isNaN(userId)) {
-      return this.userService.findByName(id);
+    try {
+      return this.userService.find(id);
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: ErrorMessagesFind.general,
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
-
-    return this.userService.find(userId);
   }
 
   @Public()
@@ -57,7 +92,7 @@ export class UserController {
       throw new HttpException(
         {
           status: HttpStatus.FORBIDDEN,
-          error,
+          error: ErrorMessagesCreate.general,
         },
         HttpStatus.FORBIDDEN,
       );
@@ -75,7 +110,7 @@ export class UserController {
       throw new HttpException(
         {
           status: HttpStatus.FORBIDDEN,
-          error,
+          error: ErrorMessagesUpdate.general,
         },
         HttpStatus.FORBIDDEN,
       );
@@ -90,12 +125,19 @@ export class UserController {
 
       if (Number.isNaN(userId)) {
         // TODO
-        throw new Error('Не корректный идентификатор пользователя.');
+        throw new Error(ErrorMessagesRemove.invalidId);
       }
 
       return this.userService.remove(userId);
     } catch (error) {
       //TODO
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: ErrorMessagesRemove.general,
+        },
+        HttpStatus.FORBIDDEN,
+      );
     }
   }
 }

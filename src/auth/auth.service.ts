@@ -47,7 +47,7 @@ export class AuthService {
   }
 
   async validateUserUsername(username: string): Promise<User> {
-    const user = await this.userService.findByName(username);
+    const user = await this.userService.find(username);
 
     if (!user) return null;
 
@@ -55,7 +55,7 @@ export class AuthService {
   }
 
   async validateUserPassword(username: string, pass: string): Promise<any> {
-    const user = await this.userService.findByName(username);
+    const user = await this.userService.find(username);
 
     if (!user) return null;
 

@@ -54,7 +54,7 @@ export class GeolocationGateway
 
       const geolocation = this.geolocationService.create({
         coordinates: data.message,
-        userId: client.auth.userId,
+        ownerId: client.auth.userId,
       });
 
       return {

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { AuthService } from 'src/auth/auth.service';
-import { Socket } from 'socket.io';
 import { UserService } from 'src/user/user.service';
 
 enum ErrorMessages {
@@ -17,7 +16,7 @@ export class EventsService {
 
   async connectByToken(token: string) {
     const username = await this.authService.getUsernameByToken(token);
-    const user = await this.userService.findByName(username);
+    const user = await this.userService.find(username);
 
     if (!user) throw new Error(ErrorMessages.user_not_found);
 

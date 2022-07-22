@@ -1,9 +1,20 @@
-import { Controller, Get, HttpCode, HttpStatus, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpException,
+  HttpStatus,
+  Query,
+} from '@nestjs/common';
 import { Geolocation } from 'src/entities';
 import { getPaginatedListMessageOption } from 'src/messages/utils';
 import { Collection } from 'src/types';
 import { PaginatedListGeolocationDto } from './dto/paginated-list-geolocation.dto';
 import { GeolocationService } from './geolocation.service';
+
+enum ErrorGeolocationList {
+  general = 'Не удалось получить список пользователей.',
+}
 
 @Controller('api/geolocations')
 export class GeolocationController {
@@ -12,10 +23,20 @@ export class GeolocationController {
   @Get()
   @HttpCode(HttpStatus.OK)
   async list(
-    @Query() query: Omit<PaginatedListGeolocationDto, 'ownerId'>,
+    @Query() query: PaginatedListGeolocationDto,
   ): Promise<Collection<Geolocation>> {
-    const messagePaginatedListOption = getPaginatedListMessageOption(query);
+    try {
+      const messagePaginatedListOption = getPaginatedListMessageOption(query);
 
-    return this.geolocationService.list(messagePaginatedListOption);
+      return this.geolocationService.list(messagePaginatedListOption);
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: ErrorGeolocationList.general,
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
   }
 }

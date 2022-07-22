@@ -19,7 +19,7 @@ export const getSkip = (pagination: Partial<Pagination>) => {
 export const getNumber = (value: any) => {
   const res = Number(value);
 
-  if (Number.isNaN) return;
+  if (Number.isNaN(res)) return;
 
   return res;
 };

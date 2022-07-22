@@ -12,8 +12,8 @@ import { Point } from 'geojson';
 import { CreateGeolocationDto } from './dto/create-geolocation.dto';
 
 enum ErrorMessages {
-  USER_NOT_FOUND = 'Пользователь не найдена.',
-  ROOM_NOT_FOUND = 'Комната не найдена.',
+  userNotFound = 'Пользователь не найдена.',
+  roomNotFound = 'Комната не найдена.',
 }
 
 @Injectable()
@@ -25,18 +25,10 @@ export class GeolocationService {
     private readonly roomService: RoomService,
   ) {}
 
-  async #getUserById(userId: number) {
+  async #getUser(userId: number) {
     const user = await this.userService.find(userId);
 
-    if (!user) throw new Error(ErrorMessages.USER_NOT_FOUND);
-
-    return user;
-  }
-
-  async #getUserByUserName(username: string) {
-    const user = await this.userService.findByName(username);
-
-    if (!user) throw new Error(ErrorMessages.USER_NOT_FOUND);
+    if (!user) throw new Error(ErrorMessages.userNotFound);
 
     return user;
   }
@@ -44,9 +36,10 @@ export class GeolocationService {
   async list(
     query: Partial<PaginatedListGeolocationDto>,
   ): Promise<Collection<Geolocation>> {
-    const { userId, _page, _page_size } = query;
+    const { ownerId, _page, _page_size } = query;
     const pagination = getPagination(query);
-    const owner = this.#getUserById(userId);
+    // const owner = this.#getUser(ownerId);
+    const owner = await this.userService.find(ownerId);
 
     const [items, total] = await this.geolocationRepository.findAndCount({
       ...pagination,
@@ -73,10 +66,11 @@ export class GeolocationService {
     };
   }
 
-  async create({ userId, coordinates }: CreateGeolocationDto) {
+  async create({ ownerId, coordinates }: CreateGeolocationDto) {
     const geolocation = new Geolocation();
 
-    const owner = await this.#getUserById(userId);
+    // const owner = await this.#getUser(ownerId);
+    const owner = await this.userService.find(ownerId);
     const point: Point = {
       coordinates,
       type: 'Point',

@@ -41,17 +41,25 @@ export class UserService {
     };
   }
 
-  async findByName(username: string): Promise<User | undefined> {
+  async #findByName(username: string): Promise<User | undefined> {
     return this.usersRepository.findOne(
       { username },
       { relations: ['ownsRooms', 'consistsRooms'] },
     );
   }
 
-  async find(id: number): Promise<User | undefined> {
+  async #findId(id: number): Promise<User | undefined> {
     return this.usersRepository.findOne(id, {
       relations: ['ownsRooms', 'consistsRooms'],
     });
+  }
+
+  async find(id: string | number): Promise<User | undefined> {
+    const userId = Number(id);
+
+    if (typeof id === 'number' && !Number.isNaN(id)) return this.#findId(id);
+    if (!Number.isNaN(userId)) return this.#findId(userId);
+    if (typeof id === 'string') return this.#findByName(id);
   }
 
   async create(createUserDto: CreateUserDto): Promise<User | undefined> {
@@ -89,7 +97,7 @@ export class UserService {
   }
 
   async addUserByUserNameToRoom(username: string, room: Room): Promise<User> {
-    const user = await this.findByName(username);
+    const user = await this.#findByName(username);
 
     if (user.consistsRooms.find((item) => item.id === room.id)) {
       // TODO подумать над обработкой ошибок
@@ -146,7 +154,7 @@ export class UserService {
   }
 
   async removeByName(username: string) {
-    const user = await this.findByName(username);
+    const user = await this.#findByName(username);
 
     await this.usersRepository.update(user, { isDeleted: true });
   }
@@ -158,8 +166,8 @@ export class UserService {
   }
 
   async recoverByName(username: string): Promise<User> {
-    await this.findByName(username);
+    await this.#findByName(username);
 
-    return this.findByName(username);
+    return this.#findByName(username);
   }
 }

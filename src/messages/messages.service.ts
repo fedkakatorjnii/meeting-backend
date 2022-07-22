@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Collection } from 'src/types';
-import { Message } from 'src/entities';
+import { Message, Room, User } from 'src/entities';
 import { UserService } from 'src/user/user.service';
 import { PaginatedListMessageDto } from './dto';
 import { getPagination } from 'src/shared/utils/pagination';
@@ -24,16 +24,8 @@ export class MessagesService {
     private readonly roomService: RoomService,
   ) {}
 
-  async #getUserById(userId: number) {
-    const user = await this.userService.find(userId);
-
-    if (!user) throw new Error(ErrorMessages.USER_NOT_FOUND);
-
-    return user;
-  }
-
-  async #getUserByUserName(username: string) {
-    const user = await this.userService.findByName(username);
+  async #getUser(id: number) {
+    const user = await this.userService.find(id);
 
     if (!user) throw new Error(ErrorMessages.USER_NOT_FOUND);
 
@@ -53,9 +45,16 @@ export class MessagesService {
   ): Promise<Collection<Message>> {
     const { ownerId, roomId, _page, _page_size } = query;
     const pagination = getPagination(query);
+    let owner: User | undefined = undefined;
+    let room: Room | undefined = undefined;
 
-    const owner = this.#getUserById(ownerId);
-    const room = this.#getRoomById(roomId);
+    if (ownerId !== undefined) {
+      owner = await this.#getUser(ownerId);
+    }
+
+    if (roomId !== undefined) {
+      room = await this.#getRoomById(roomId);
+    }
 
     const [items, total] = await this.messageRepository.findAndCount({
       ...pagination,
@@ -83,8 +82,23 @@ export class MessagesService {
     };
   }
 
+  async findByUser(id: string | number): Promise<Message | undefined> {
+    const owner = await this.userService.find(id);
+
+    return this.messageRepository.findOne(
+      { owner },
+      // { relations: ['owner', 'room'] },
+    );
+  }
+
+  async find(id: number): Promise<Message | undefined> {
+    return this.messageRepository.findOne(id, {
+      // relations: ['owner', 'room'],
+    });
+  }
+
   async create(data: CreateMessageDto) {
-    const owner = await this.#getUserById(data.ownerId);
+    const owner = await this.#getUser(data.ownerId);
     const room = await this.#getRoomById(data.roomId);
 
     const message = new Message();
