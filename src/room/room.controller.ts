@@ -140,11 +140,9 @@ export class RoomController {
   async addUserToRoom(
     @Param('id') id,
     @Body() { userId }: { userId: number },
-  ): Promise<User> {
+  ): Promise<void> {
     try {
-      const user = await this.roomService.addUserToRoom(userId, id);
-
-      return user;
+      await this.roomService.addUserToRoom(userId, id);
     } catch (error) {
       throw new HttpException(
         {
@@ -161,11 +159,9 @@ export class RoomController {
   async removeUserFromRoom(
     @Param('id') id: number,
     @Body() { userId }: { userId: number },
-  ): Promise<User> {
+  ): Promise<void> {
     try {
-      const user = await this.roomService.removeUserFromRoom(userId, id);
-
-      return user;
+      await this.roomService.removeUserFromRoom(userId, id);
     } catch (error) {
       throw new HttpException(
         {

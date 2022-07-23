@@ -14,6 +14,8 @@ import {
 } from '@nestjs/common';
 import { Public } from 'src/auth/constants';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { getSafeUser } from 'src/common/halpers';
+import { SafeUser } from 'src/common/types';
 import { User } from 'src/entities';
 import { getPaginationOption } from 'src/shared/utils/pagination';
 import { Collection, Pagination } from 'src/types';
@@ -48,11 +50,11 @@ export class UserController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  async list(@Query() query: Pagination): Promise<Collection<User>> {
+  async list(@Query() query: Pagination): Promise<Collection<SafeUser>> {
     try {
       const pagination = getPaginationOption(query);
 
-      return this.userService.list(pagination);
+      return this.userService.list(pagination, true);
     } catch (error) {
       throw new HttpException(
         {
@@ -66,9 +68,9 @@ export class UserController {
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
-  async find(@Param('id') id: string): Promise<User> {
+  async find(@Param('id') id: string): Promise<SafeUser> {
     try {
-      return this.userService.find(id);
+      return this.userService.find(id, true);
     } catch (error) {
       throw new HttpException(
         {
@@ -83,7 +85,7 @@ export class UserController {
   @Public()
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+  async create(@Body() createUserDto: CreateUserDto): Promise<SafeUser> {
     try {
       const user = await this.userService.create(createUserDto);
 
@@ -128,7 +130,7 @@ export class UserController {
         throw new Error(ErrorMessagesRemove.invalidId);
       }
 
-      return this.userService.remove(userId);
+      await this.userService.remove(userId);
     } catch (error) {
       //TODO
       throw new HttpException(

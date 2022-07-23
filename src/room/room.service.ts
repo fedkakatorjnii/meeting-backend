@@ -91,7 +91,7 @@ export class RoomService {
     await this.roomRepository.delete(id);
   }
 
-  async addUserToRoom(userId: number, roomId: number): Promise<User> {
+  async addUserToRoom(userId: number, roomId: number): Promise<boolean> {
     const room = await this.roomRepository.findOne(roomId);
 
     if (!room) throw new Error(ErrorMessages.notFoundRoom);
@@ -99,7 +99,7 @@ export class RoomService {
     return this.userService.addUserToRoom(userId, room);
   }
 
-  async removeUserFromRoom(userId: number, roomId: number): Promise<User> {
+  async removeUserFromRoom(userId: number, roomId: number): Promise<boolean> {
     const room = await this.roomRepository.findOne(roomId);
 
     if (!room) throw new Error();

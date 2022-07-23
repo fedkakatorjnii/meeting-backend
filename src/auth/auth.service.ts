@@ -4,6 +4,8 @@ import * as bcrypt from 'bcrypt';
 import { User } from 'src/entities';
 import { UserService } from 'src/user/user.service';
 import { isJWTPayload } from 'src/common/typeGuards';
+import { SafeUser } from 'src/common/types';
+import { getSafeUser } from 'src/common/halpers';
 
 enum ErrorMessages {
   invalidToken = 'Неверный токен.',
@@ -32,7 +34,7 @@ export class AuthService {
     return username;
   }
 
-  async validateUserToken(token: string): Promise<User> {
+  async validateUserToken(token: string): Promise<SafeUser> {
     const username = await this.getUsernameByToken(token);
 
     // if (!username) return null;
@@ -54,7 +56,10 @@ export class AuthService {
     return user;
   }
 
-  async validateUserPassword(username: string, pass: string): Promise<any> {
+  async validateUserPassword(
+    username: string,
+    pass: string,
+  ): Promise<SafeUser> {
     const user = await this.userService.find(username);
 
     if (!user) return null;
@@ -63,9 +68,7 @@ export class AuthService {
 
     if (!isValid) return null;
 
-    const { password, ...result } = user;
-
-    return result;
+    return getSafeUser(user);
   }
 
   async login(user: any) {

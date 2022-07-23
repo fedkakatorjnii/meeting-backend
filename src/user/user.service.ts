@@ -6,6 +6,25 @@ import { Collection, Pagination } from 'src/types';
 import { Room, User } from 'src/entities';
 import { CreateUserDto, UpdateUserDto, UserDto } from './dto';
 import { getPagination } from 'src/shared/utils/pagination';
+import { SafeUser, SafeUserColumns } from 'src/common/types';
+import { getSafeUser } from 'src/common/halpers';
+
+const safeUserColumns: SafeUserColumns = [
+  'id',
+  'username',
+  'firstName',
+  'lastName',
+  'email',
+  'isActive',
+  'isDeleted',
+  'isSuperuser',
+  'createdAt',
+  'updatedAt',
+  'ownsRooms',
+  'consistsRooms',
+  'messages',
+  'geolocations',
+];
 
 @Injectable()
 export class UserService {
@@ -14,13 +33,19 @@ export class UserService {
     private readonly usersRepository: Repository<User>,
   ) {}
 
-  async list(query: Partial<Pagination>): Promise<Collection<User>> {
+  async list(query: Partial<Pagination>): Promise<Collection<User>>;
+  async list(
+    query: Partial<Pagination>,
+    isSafe: true,
+  ): Promise<Collection<SafeUser>>;
+  async list(query: Partial<Pagination>, isSafe?: boolean) {
     const { _page, _page_size } = query;
     const pagination = getPagination(query);
 
     const [items, total] = await this.usersRepository.findAndCount({
       ...pagination,
       relations: ['ownsRooms', 'consistsRooms'],
+      select: isSafe ? safeUserColumns : undefined,
     });
     const page = _page;
     const size = _page_size;
@@ -41,28 +66,43 @@ export class UserService {
     };
   }
 
-  async #findByName(username: string): Promise<User | undefined> {
+  async #findByName(
+    username: string,
+    isSafe: true,
+  ): Promise<SafeUser | undefined>;
+  async #findByName(username: string, isSafe: false): Promise<User | undefined>;
+  async #findByName(username: string, isSafe: true | false) {
     return this.usersRepository.findOne(
       { username },
-      { relations: ['ownsRooms', 'consistsRooms'] },
+      {
+        relations: ['ownsRooms', 'consistsRooms'],
+        select: isSafe ? safeUserColumns : undefined,
+      },
     );
   }
 
-  async #findId(id: number): Promise<User | undefined> {
+  async #findId(id: number, isSafe: false): Promise<User | undefined>;
+  async #findId(id: number, isSafe: true): Promise<SafeUser | undefined>;
+  async #findId(id: number, isSafe?: boolean) {
     return this.usersRepository.findOne(id, {
       relations: ['ownsRooms', 'consistsRooms'],
+      select: isSafe ? safeUserColumns : undefined,
     });
   }
 
-  async find(id: string | number): Promise<User | undefined> {
+  async find(id: string | number): Promise<User | undefined>;
+  async find(id: string | number, isSafe: true): Promise<SafeUser | undefined>;
+  async find(id: string | number, isSafe?: true) {
     const userId = Number(id);
 
-    if (typeof id === 'number' && !Number.isNaN(id)) return this.#findId(id);
-    if (!Number.isNaN(userId)) return this.#findId(userId);
-    if (typeof id === 'string') return this.#findByName(id);
+    if (typeof id === 'number' && !Number.isNaN(id)) {
+      return this.#findId(id, isSafe);
+    }
+    if (!Number.isNaN(userId)) return this.#findId(userId, isSafe);
+    if (typeof id === 'string') return this.#findByName(id, isSafe);
   }
 
-  async create(createUserDto: CreateUserDto): Promise<User | undefined> {
+  async create(createUserDto: CreateUserDto): Promise<SafeUser | undefined> {
     const user = new User();
 
     user.username = createUserDto.username;
@@ -77,10 +117,12 @@ export class UserService {
 
     if (errors.length > 0) throw errors;
 
-    return this.usersRepository.save(user);
+    const newUser = await this.usersRepository.save(user);
+
+    return getSafeUser(newUser);
   }
 
-  async update({ id, ...rest }: UpdateUserDto): Promise<User | undefined> {
+  async update({ id, ...rest }: UpdateUserDto): Promise<SafeUser | undefined> {
     const user = await this.usersRepository.findOne(id);
 
     user.username = rest.username;
@@ -93,81 +135,116 @@ export class UserService {
 
     if (errors.length > 0) throw errors;
 
-    return this.usersRepository.save(user);
+    const newUser = await this.usersRepository.save(user);
+
+    return getSafeUser(newUser);
   }
 
-  async addUserByUserNameToRoom(username: string, room: Room): Promise<User> {
-    const user = await this.#findByName(username);
+  async addUserByUserNameToRoom(
+    username: string,
+    room: Room,
+  ): Promise<boolean> {
+    const user = await this.find(username);
 
     if (user.consistsRooms.find((item) => item.id === room.id)) {
       // TODO подумать над обработкой ошибок
-      return user;
+      return false;
     }
 
     user.consistsRooms.push(room);
 
-    return this.usersRepository.save(user);
+    return true;
   }
 
-  async addUserToRoom(userId: number, room: Room): Promise<User> {
+  async addUserToRoom(userId: number, room: Room): Promise<boolean> {
     const user = await this.usersRepository.findOne(userId, {
       relations: ['consistsRooms'],
     });
 
     if (user.consistsRooms.find((item) => item.id === room.id)) {
       // TODO подумать над обработкой ошибок
-      return user;
+      return false;
     }
 
     user.consistsRooms.push(room);
 
-    return this.usersRepository.save(user);
+    return true;
   }
 
-  async removeUserFromRoom(userId: number, room: Room): Promise<User> {
+  async removeUserFromRoom(userId: number, room: Room): Promise<boolean> {
     const user = await this.usersRepository.findOne(userId, {
       relations: ['consistsRooms'],
     });
 
     if (!user.consistsRooms.find((item) => item.id === room.id)) {
       // TODO подумать над обработкой ошибок
-      return user;
+      return true;
     }
 
     user.consistsRooms = user.consistsRooms.filter(
       (item) => item.id !== room.id,
     );
 
-    return this.usersRepository.save(user);
+    return false;
   }
 
   async activate(id: Pick<UserDto, 'id'>, isActive: boolean) {
-    return this.usersRepository.update(id, { isActive });
+    try {
+      await this.usersRepository.update(id, { isActive });
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   async superuser(id: Pick<UserDto, 'id'>, isSuperuser: boolean) {
-    return this.usersRepository.update(id, { isSuperuser });
+    try {
+      return this.usersRepository.update(id, { isSuperuser });
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
-  async remove(id: number) {
-    await this.usersRepository.update(id, { isDeleted: true });
+  async remove(id: number): Promise<boolean> {
+    try {
+      await this.usersRepository.update(id, { isDeleted: true });
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
-  async removeByName(username: string) {
-    const user = await this.#findByName(username);
+  async removeByName(username: string): Promise<boolean> {
+    try {
+      const user = await this.find(username);
 
-    await this.usersRepository.update(user, { isDeleted: true });
+      await this.usersRepository.update(user, { isDeleted: true });
+
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
-  async recover(id: number): Promise<User> {
-    await this.usersRepository.update(id, { isDeleted: false });
-
-    return this.find(id);
+  async recover(id: number): Promise<boolean> {
+    try {
+      await this.usersRepository.update(id, { isDeleted: false });
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
-  async recoverByName(username: string): Promise<User> {
-    await this.#findByName(username);
+  async recoverByName(username: string): Promise<boolean> {
+    try {
+      const user = await this.find(username);
 
-    return this.#findByName(username);
+      await this.usersRepository.update(user, { isDeleted: true });
+
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 }
