@@ -9,10 +9,12 @@ import {
   Param,
   Post,
   Put,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
-import { Room, User } from 'src/entities';
+import { AuthUser } from 'src/common/halpers';
+import { Room } from 'src/entities';
 import { Collection } from 'src/types';
 import { CreateRoomDto, UpdateRoomDto } from './dto';
 import { RoomService } from './room.service';
@@ -46,6 +48,14 @@ enum ErrorRoomsRemoveUserFromRoom {
   general = 'Ошибка удаления пользователя из комнаты.',
 }
 
+enum SuccessRoomsAddUserToRoom {
+  general = 'Ползователь успешно добавле в группу.',
+}
+
+enum SuccessRoomsRemoveUserFromRoom {
+  general = 'Пользователь удалён из группы.',
+}
+
 @UseGuards(JwtAuthGuard)
 @Controller('api/rooms')
 export class RoomController {
@@ -53,9 +63,9 @@ export class RoomController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  async list(): Promise<Collection<Room>> {
+  async list(@Request() req, @AuthUser() user): Promise<Collection<Room>> {
     try {
-      return this.roomService.list();
+      return this.roomService.list(user);
     } catch (error) {
       throw new HttpException(
         {
@@ -140,14 +150,18 @@ export class RoomController {
   async addUserToRoom(
     @Param('id') id,
     @Body() { userId }: { userId: number },
-  ): Promise<void> {
+  ): Promise<string> {
     try {
-      await this.roomService.addUserToRoom(userId, id);
+      if (!(await this.roomService.addUserToRoom(userId, id))) {
+        throw new Error(ErrorRoomsAddUserToRoom.general);
+      }
+
+      return SuccessRoomsAddUserToRoom.general;
     } catch (error) {
       throw new HttpException(
         {
           status: HttpStatus.FORBIDDEN,
-          error: ErrorRoomsAddUserToRoom,
+          error: ErrorRoomsAddUserToRoom.general,
         },
         HttpStatus.FORBIDDEN,
       );
@@ -159,14 +173,18 @@ export class RoomController {
   async removeUserFromRoom(
     @Param('id') id: number,
     @Body() { userId }: { userId: number },
-  ): Promise<void> {
+  ): Promise<string> {
     try {
-      await this.roomService.removeUserFromRoom(userId, id);
+      if (!(await this.roomService.removeUserFromRoom(userId, id))) {
+        throw new Error(ErrorRoomsRemoveUserFromRoom.general);
+      }
+
+      return SuccessRoomsRemoveUserFromRoom.general;
     } catch (error) {
       throw new HttpException(
         {
           status: HttpStatus.FORBIDDEN,
-          error: ErrorRoomsRemoveUserFromRoom,
+          error: ErrorRoomsRemoveUserFromRoom.general,
         },
         HttpStatus.FORBIDDEN,
       );

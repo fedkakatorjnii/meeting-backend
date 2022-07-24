@@ -20,10 +20,16 @@ export class RoomService {
     private readonly userService: UserService,
   ) {}
 
-  async list(): Promise<Collection<Room>> {
-    const [items, total] = await this.roomRepository.findAndCount({
-      relations: ['owner'],
-    });
+  async list(user: User): Promise<Collection<Room>> {
+    const ownsRoomIds = user.ownsRooms.map((item) => item.id);
+    const consistsRoomIds = user.consistsRooms.map((item) => item.id);
+    const roomIds = [...ownsRoomIds, ...consistsRoomIds];
+    const selectQueryBuilder = this.roomRepository
+      .createQueryBuilder('room')
+      .where('room.id = any(:roomIds)', { roomIds });
+
+    const [items, total] = await selectQueryBuilder.getManyAndCount();
+
     const page = 0;
     const size = total;
     const first = null;

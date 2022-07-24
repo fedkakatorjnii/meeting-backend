@@ -14,6 +14,11 @@ export interface Pagination {
   _page_size: number;
 }
 
+export interface QueryPagination {
+  skip: number;
+  take: number;
+}
+
 export interface jwtPayload {
   username: string;
   iat: number;

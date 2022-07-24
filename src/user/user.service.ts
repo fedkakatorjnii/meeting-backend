@@ -2,29 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { validate } from 'class-validator';
+
 import { Collection, Pagination } from 'src/types';
 import { Room, User } from 'src/entities';
-import { CreateUserDto, UpdateUserDto, UserDto } from './dto';
 import { getPagination } from 'src/shared/utils/pagination';
-import { SafeUser, SafeUserColumns } from 'src/common/types';
+import { SafeUser } from 'src/common/types';
 import { getSafeUser } from 'src/common/halpers';
 
-const safeUserColumns: SafeUserColumns = [
-  'id',
-  'username',
-  'firstName',
-  'lastName',
-  'email',
-  'isActive',
-  'isDeleted',
-  'isSuperuser',
-  'createdAt',
-  'updatedAt',
-  'ownsRooms',
-  'consistsRooms',
-  'messages',
-  'geolocations',
-];
+import { CreateUserDto, UpdateUserDto, UserDto } from './dto';
+import { getUserColumns } from './halpers';
 
 @Injectable()
 export class UserService {
@@ -40,13 +26,20 @@ export class UserService {
   ): Promise<Collection<SafeUser>>;
   async list(query: Partial<Pagination>, isSafe?: boolean) {
     const { _page, _page_size } = query;
-    const pagination = getPagination(query);
+    const { skip, take } = getPagination(query);
+    const mainPrefix = 'user';
+    const columns = getUserColumns(isSafe, mainPrefix);
 
-    const [items, total] = await this.usersRepository.findAndCount({
-      ...pagination,
-      relations: ['ownsRooms', 'consistsRooms'],
-      select: isSafe ? safeUserColumns : undefined,
-    });
+    const selectQueryBuilder = this.usersRepository
+      .createQueryBuilder(mainPrefix)
+      .select(columns)
+      .leftJoinAndSelect('user.ownsRooms', 'owner')
+      .leftJoinAndSelect('user.consistsRooms', 'room')
+      .skip(skip)
+      .take(take);
+
+    const [items, total] = await selectQueryBuilder.getManyAndCount();
+
     const page = _page;
     const size = _page_size;
     const first = null;
@@ -76,7 +69,7 @@ export class UserService {
       { username },
       {
         relations: ['ownsRooms', 'consistsRooms'],
-        select: isSafe ? safeUserColumns : undefined,
+        select: getUserColumns(isSafe),
       },
     );
   }
@@ -86,7 +79,7 @@ export class UserService {
   async #findId(id: number, isSafe?: boolean) {
     return this.usersRepository.findOne(id, {
       relations: ['ownsRooms', 'consistsRooms'],
-      select: isSafe ? safeUserColumns : undefined,
+      select: getUserColumns(isSafe),
     });
   }
 
@@ -167,6 +160,7 @@ export class UserService {
     }
 
     user.consistsRooms.push(room);
+    await this.usersRepository.save(user);
 
     return true;
   }
