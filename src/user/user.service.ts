@@ -3,9 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { validate } from 'class-validator';
 
-import { Collection, Pagination } from 'src/types';
+import { PaginatedCollection, Pagination } from 'src/types';
 import { Room, User } from 'src/entities';
-import { getPagination } from 'src/shared/utils/pagination';
+import { getLinks, getPagination } from 'src/shared/utils/pagination';
 import { SafeUser } from 'src/common/types';
 import { getSafeUser } from 'src/common/halpers';
 
@@ -19,11 +19,11 @@ export class UserService {
     private readonly usersRepository: Repository<User>,
   ) {}
 
-  async list(query: Partial<Pagination>): Promise<Collection<User>>;
+  async list(query: Partial<Pagination>): Promise<PaginatedCollection<User>>;
   async list(
     query: Partial<Pagination>,
     isSafe: true,
-  ): Promise<Collection<SafeUser>>;
+  ): Promise<PaginatedCollection<SafeUser>>;
   async list(query: Partial<Pagination>, isSafe?: boolean) {
     const { _page, _page_size } = query;
     const { skip, take } = getPagination(query);
@@ -42,20 +42,19 @@ export class UserService {
 
     const page = _page;
     const size = _page_size;
-    const first = null;
-    const next = null;
-    const previous = null;
-    const last = null;
+
+    const links = getLinks({
+      page,
+      size,
+      total,
+    });
 
     return {
       items,
       total,
       page,
       size,
-      first,
-      next,
-      previous,
-      last,
+      links,
     };
   }
 
@@ -185,6 +184,7 @@ export class UserService {
   async activate(id: Pick<UserDto, 'id'>, isActive: boolean) {
     try {
       await this.usersRepository.update(id, { isActive });
+
       return true;
     } catch (error) {
       return false;
@@ -193,7 +193,8 @@ export class UserService {
 
   async superuser(id: Pick<UserDto, 'id'>, isSuperuser: boolean) {
     try {
-      return this.usersRepository.update(id, { isSuperuser });
+      await this.usersRepository.update(id, { isSuperuser });
+
       return true;
     } catch (error) {
       return false;
@@ -203,6 +204,7 @@ export class UserService {
   async remove(id: number): Promise<boolean> {
     try {
       await this.usersRepository.update(id, { isDeleted: true });
+
       return true;
     } catch (error) {
       return false;
@@ -224,6 +226,7 @@ export class UserService {
   async recover(id: number): Promise<boolean> {
     try {
       await this.usersRepository.update(id, { isDeleted: false });
+
       return true;
     } catch (error) {
       return false;

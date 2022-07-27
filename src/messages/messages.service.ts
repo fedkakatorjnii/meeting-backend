@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Collection } from 'src/types';
+import { validate } from 'class-validator';
+
+import { PaginatedCollection } from 'src/types';
 import { Message, Room, User } from 'src/entities';
 import { UserService } from 'src/user/user.service';
-import { PaginatedListMessageDto } from './dto';
-import { getPagination } from 'src/shared/utils/pagination';
+import { getLinks, getPagination } from 'src/shared/utils/pagination';
 import { RoomService } from 'src/room/room.service';
+
+import { PaginatedListMessageDto } from './dto';
 import { CreateMessageDto } from './dto';
-import { validate } from 'class-validator';
 
 enum ErrorMessages {
   USER_NOT_FOUND = 'Пользователь не найдена.',
@@ -42,7 +44,7 @@ export class MessagesService {
 
   async list(
     query: Partial<PaginatedListMessageDto>,
-  ): Promise<Collection<Message>> {
+  ): Promise<PaginatedCollection<Message>> {
     const { ownerId, roomId, _page, _page_size } = query;
     const pagination = getPagination(query);
     let owner: User | undefined = undefined;
@@ -65,20 +67,19 @@ export class MessagesService {
     });
     const page = _page;
     const size = _page_size;
-    const first = null;
-    const next = null;
-    const previous = null;
-    const last = null;
+
+    const links = getLinks({
+      page,
+      size,
+      total,
+    });
 
     return {
       items,
       total,
       page,
       size,
-      first,
-      next,
-      previous,
-      last,
+      links,
     };
   }
 

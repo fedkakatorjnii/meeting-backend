@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { validate } from 'class-validator';
+import { Repository } from 'typeorm';
+import { Point } from 'geojson';
+
 import { Geolocation } from 'src/entities';
 import { RoomService } from 'src/room/room.service';
 import { UserService } from 'src/user/user.service';
-import { Repository } from 'typeorm';
-import { Collection } from 'src/types';
+import { PaginatedCollection } from 'src/types';
+import { getLinks, getPagination } from 'src/shared/utils/pagination';
+
 import { PaginatedListGeolocationDto } from './dto/paginated-list-geolocation.dto';
-import { getPagination } from 'src/shared/utils/pagination';
-import { Point } from 'geojson';
 import { CreateGeolocationDto } from './dto/create-geolocation.dto';
 
 enum ErrorMessages {
@@ -35,7 +37,7 @@ export class GeolocationService {
 
   async list(
     query: Partial<PaginatedListGeolocationDto>,
-  ): Promise<Collection<Geolocation>> {
+  ): Promise<PaginatedCollection<Geolocation>> {
     const { ownerId, _page, _page_size } = query;
     const pagination = getPagination(query);
     // const owner = this.#getUser(ownerId);
@@ -49,20 +51,19 @@ export class GeolocationService {
     });
     const page = _page;
     const size = _page_size;
-    const first = null;
-    const next = null;
-    const previous = null;
-    const last = null;
+
+    const links = getLinks({
+      page,
+      size,
+      total,
+    });
 
     return {
       items,
       total,
       page,
       size,
-      first,
-      next,
-      previous,
-      last,
+      links,
     };
   }
 

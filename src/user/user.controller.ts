@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpCode,
   HttpException,
   HttpStatus,
@@ -12,13 +13,16 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+
 import { Public } from 'src/auth/constants';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
-import { getSafeUser } from 'src/common/halpers';
 import { SafeUser } from 'src/common/types';
-import { User } from 'src/entities';
-import { getPaginationOption } from 'src/shared/utils/pagination';
-import { Collection, Pagination } from 'src/types';
+import {
+  getCurrentLinks,
+  getPaginationOption,
+} from 'src/shared/utils/pagination';
+import { PaginatedCollectionResponse, Pagination } from 'src/types';
+
 import { CreateUserDto } from './dto';
 import { UserService } from './user.service';
 
@@ -43,18 +47,28 @@ enum ErrorMessagesRemove {
   invalidId = 'Не корректный идентификатор пользователя.',
 }
 
+const uri = 'api/users';
+
 @UseGuards(JwtAuthGuard)
-@Controller('api/users')
+@Controller(uri)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  async list(@Query() query: Pagination): Promise<Collection<SafeUser>> {
+  async list(
+    @Headers('host') host,
+    @Query() query: Pagination,
+  ): Promise<PaginatedCollectionResponse<SafeUser>> {
+    const url = `${host}/${uri}`;
+
     try {
       const pagination = getPaginationOption(query);
 
-      return this.userService.list(pagination, true);
+      const { links, ...rest } = await this.userService.list(pagination, true);
+      const currentLinks = getCurrentLinks(url, links);
+
+      return { ...rest, ...currentLinks };
     } catch (error) {
       throw new HttpException(
         {

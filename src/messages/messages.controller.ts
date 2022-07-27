@@ -7,12 +7,16 @@ import {
   Query,
   HttpException,
   Param,
+  Headers,
 } from '@nestjs/common';
+
 import { AuthService } from 'src/auth/auth.service';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { getCurrentLinks } from 'src/shared/utils/pagination';
 import { Message } from 'src/entities';
+import { PaginatedCollectionResponse } from 'src/types';
+
 import { getPaginatedListMessageOption } from './utils';
-import { Collection } from 'src/types';
 import { MessagesService } from './messages.service';
 import { PaginatedListMessageDto } from './dto';
 
@@ -27,8 +31,10 @@ enum ErrorMessagesList {
   general = 'Не удалось получить список сообщений.',
 }
 
+const uri = 'api/messages';
+
 @UseGuards(JwtAuthGuard)
-@Controller('api/messages')
+@Controller(uri)
 export class MessagesController {
   constructor(
     private readonly messagesService: MessagesService,
@@ -76,12 +82,20 @@ export class MessagesController {
   @Get()
   @HttpCode(HttpStatus.OK)
   async list(
+    @Headers('host') host,
     @Query() query: Omit<PaginatedListMessageDto, 'ownerId'>,
-  ): Promise<Collection<Message>> {
+  ): Promise<PaginatedCollectionResponse<Message>> {
     try {
+      const url = `${host}/${uri}`;
       const messagePaginatedListOption = getPaginatedListMessageOption(query);
 
-      return this.messagesService.list(messagePaginatedListOption);
+      const { links, ...rest } = await this.messagesService.list(
+        messagePaginatedListOption,
+      );
+
+      const currentLinks = getCurrentLinks(url, links);
+
+      return { ...rest, ...currentLinks };
     } catch (error) {
       throw new HttpException(
         {

@@ -1,11 +1,14 @@
-import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { Collection } from 'src/types';
-import { Room, User } from 'src/entities';
-import { CreateRoomDto, UpdateRoomDto } from './dto';
-import { UserService } from 'src/user/user.service';
 import { validate } from 'class-validator';
+
+import { PaginatedCollection } from 'src/types';
+import { Room, User } from 'src/entities';
+import { UserService } from 'src/user/user.service';
+import { getLinks } from 'src/shared/utils/pagination';
+
+import { CreateRoomDto, UpdateRoomDto } from './dto';
 
 enum ErrorMessages {
   notValidUserMessage = 'Не валидный пользователь.',
@@ -20,7 +23,7 @@ export class RoomService {
     private readonly userService: UserService,
   ) {}
 
-  async list(user: User): Promise<Collection<Room>> {
+  async list(user: User): Promise<PaginatedCollection<Room>> {
     const ownsRoomIds = user.ownsRooms.map((item) => item.id);
     const consistsRoomIds = user.consistsRooms.map((item) => item.id);
     const roomIds = [...ownsRoomIds, ...consistsRoomIds];
@@ -32,20 +35,19 @@ export class RoomService {
 
     const page = 0;
     const size = total;
-    const first = null;
-    const next = null;
-    const previous = null;
-    const last = null;
+
+    const links = getLinks({
+      page,
+      size,
+      total,
+    });
 
     return {
       items,
       total,
       page,
       size,
-      first,
-      next,
-      previous,
-      last,
+      links,
     };
   }
 

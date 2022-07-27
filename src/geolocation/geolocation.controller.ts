@@ -1,14 +1,18 @@
 import {
   Controller,
   Get,
+  Headers,
   HttpCode,
   HttpException,
   HttpStatus,
   Query,
 } from '@nestjs/common';
+
 import { Geolocation } from 'src/entities';
 import { getPaginatedListMessageOption } from 'src/messages/utils';
-import { Collection } from 'src/types';
+import { getCurrentLinks } from 'src/shared/utils/pagination';
+import { PaginatedCollectionResponse } from 'src/types';
+
 import { PaginatedListGeolocationDto } from './dto/paginated-list-geolocation.dto';
 import { GeolocationService } from './geolocation.service';
 
@@ -16,19 +20,28 @@ enum ErrorGeolocationList {
   general = 'Не удалось получить список пользователей.',
 }
 
-@Controller('api/geolocations')
+const uri = 'api/geolocations';
+
+@Controller(uri)
 export class GeolocationController {
   constructor(private readonly geolocationService: GeolocationService) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
   async list(
+    @Headers('host') host,
     @Query() query: PaginatedListGeolocationDto,
-  ): Promise<Collection<Geolocation>> {
+  ): Promise<PaginatedCollectionResponse<Geolocation>> {
     try {
+      const url = `${host}/${uri}`;
       const messagePaginatedListOption = getPaginatedListMessageOption(query);
 
-      return this.geolocationService.list(messagePaginatedListOption);
+      const { links, ...rest } = await this.geolocationService.list(
+        messagePaginatedListOption,
+      );
+      const currentLinks = getCurrentLinks(url, links);
+
+      return { ...rest, ...currentLinks };
     } catch (error) {
       throw new HttpException(
         {

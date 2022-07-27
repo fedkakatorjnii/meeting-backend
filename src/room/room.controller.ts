@@ -3,19 +3,22 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   HttpCode,
   HttpException,
   HttpStatus,
   Param,
   Post,
   Put,
-  Request,
   UseGuards,
 } from '@nestjs/common';
+
+import { getCurrentLinks } from 'src/shared/utils/pagination';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { PaginatedCollectionResponse } from 'src/types';
 import { AuthUser } from 'src/common/halpers';
 import { Room } from 'src/entities';
-import { Collection } from 'src/types';
+
 import { CreateRoomDto, UpdateRoomDto } from './dto';
 import { RoomService } from './room.service';
 
@@ -56,16 +59,27 @@ enum SuccessRoomsRemoveUserFromRoom {
   general = 'Пользователь удалён из группы.',
 }
 
+const uri = 'api/rooms';
+
 @UseGuards(JwtAuthGuard)
-@Controller('api/rooms')
+@Controller(uri)
 export class RoomController {
   constructor(private readonly roomService: RoomService) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  async list(@Request() req, @AuthUser() user): Promise<Collection<Room>> {
+  async list(
+    @Headers('host') host,
+    @AuthUser() user,
+  ): Promise<PaginatedCollectionResponse<Room>> {
     try {
-      return this.roomService.list(user);
+      const url = `${host}/${uri}`;
+
+      const { links, ...rest } = await this.roomService.list(user);
+
+      const currentLinks = getCurrentLinks(url, links);
+
+      return { ...rest, ...currentLinks };
     } catch (error) {
       throw new HttpException(
         {
