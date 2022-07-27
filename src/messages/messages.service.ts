@@ -9,8 +9,7 @@ import { UserService } from 'src/user/user.service';
 import { getLinks, getPagination } from 'src/shared/utils/pagination';
 import { RoomService } from 'src/room/room.service';
 
-import { PaginatedListMessageDto } from './dto';
-import { CreateMessageDto } from './dto';
+import { PaginatedListMessageDto, CreateMessageDto } from './dto';
 
 enum ErrorMessages {
   USER_NOT_FOUND = 'Пользователь не найдена.',

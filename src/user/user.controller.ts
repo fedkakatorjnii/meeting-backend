@@ -13,6 +13,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { Public } from 'src/auth/constants';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
@@ -23,8 +29,9 @@ import {
 } from 'src/shared/utils/pagination';
 import { PaginatedCollectionResponse, Pagination } from 'src/types';
 
-import { CreateUserDto } from './dto';
+import { CreateUserDto, PaginatedListUsersDto } from './dto';
 import { UserService } from './user.service';
+import { User } from 'src/entities';
 
 enum ErrorMessagesCreate {
   general = 'Ошибка создания пользователя.',
@@ -49,6 +56,8 @@ enum ErrorMessagesRemove {
 
 const uri = 'api/users';
 
+@ApiBearerAuth()
+@ApiTags('users')
 @UseGuards(JwtAuthGuard)
 @Controller(uri)
 export class UserController {
@@ -58,7 +67,7 @@ export class UserController {
   @HttpCode(HttpStatus.OK)
   async list(
     @Headers('host') host,
-    @Query() query: Pagination,
+    @Query() query: PaginatedListUsersDto,
   ): Promise<PaginatedCollectionResponse<SafeUser>> {
     const url = `${host}/${uri}`;
 

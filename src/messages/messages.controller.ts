@@ -9,6 +9,7 @@ import {
   Param,
   Headers,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from 'src/auth/auth.service';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
@@ -33,6 +34,8 @@ enum ErrorMessagesList {
 
 const uri = 'api/messages';
 
+@ApiBearerAuth()
+@ApiTags('messages')
 @UseGuards(JwtAuthGuard)
 @Controller(uri)
 export class MessagesController {
@@ -83,7 +86,7 @@ export class MessagesController {
   @HttpCode(HttpStatus.OK)
   async list(
     @Headers('host') host,
-    @Query() query: Omit<PaginatedListMessageDto, 'ownerId'>,
+    @Query() query: PaginatedListMessageDto,
   ): Promise<PaginatedCollectionResponse<Message>> {
     try {
       const url = `${host}/${uri}`;

@@ -10,6 +10,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 
@@ -19,8 +20,9 @@ import { PaginatedCollectionResponse } from 'src/types';
 import { AuthUser } from 'src/common/halpers';
 import { Room } from 'src/entities';
 
-import { CreateRoomDto, UpdateRoomDto } from './dto';
+import { CreateRoomDto, PaginatedListRoomsDto, UpdateRoomDto } from './dto';
 import { RoomService } from './room.service';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 enum ErrorRoomsCreate {
   general = 'Ошибка создания комнаты.',
@@ -61,6 +63,8 @@ enum SuccessRoomsRemoveUserFromRoom {
 
 const uri = 'api/rooms';
 
+@ApiBearerAuth()
+@ApiTags('rooms')
 @UseGuards(JwtAuthGuard)
 @Controller(uri)
 export class RoomController {
@@ -71,6 +75,7 @@ export class RoomController {
   async list(
     @Headers('host') host,
     @AuthUser() user,
+    @Query() query: PaginatedListRoomsDto,
   ): Promise<PaginatedCollectionResponse<Room>> {
     try {
       const url = `${host}/${uri}`;

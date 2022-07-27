@@ -10,8 +10,7 @@ import { UserService } from 'src/user/user.service';
 import { PaginatedCollection } from 'src/types';
 import { getLinks, getPagination } from 'src/shared/utils/pagination';
 
-import { PaginatedListGeolocationDto } from './dto/paginated-list-geolocation.dto';
-import { CreateGeolocationDto } from './dto/create-geolocation.dto';
+import { CreateGeolocationDto, PaginatedListGeolocationDto } from './dto';
 
 enum ErrorMessages {
   userNotFound = 'Пользователь не найдена.',

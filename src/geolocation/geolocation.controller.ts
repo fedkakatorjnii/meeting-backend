@@ -6,14 +6,17 @@ import {
   HttpException,
   HttpStatus,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 
 import { Geolocation } from 'src/entities';
 import { getPaginatedListMessageOption } from 'src/messages/utils';
 import { getCurrentLinks } from 'src/shared/utils/pagination';
 import { PaginatedCollectionResponse } from 'src/types';
 
-import { PaginatedListGeolocationDto } from './dto/paginated-list-geolocation.dto';
+import { PaginatedListGeolocationDto } from './dto';
 import { GeolocationService } from './geolocation.service';
 
 enum ErrorGeolocationList {
@@ -22,6 +25,9 @@ enum ErrorGeolocationList {
 
 const uri = 'api/geolocations';
 
+@ApiBearerAuth()
+@ApiTags('geolocations')
+@UseGuards(JwtAuthGuard)
 @Controller(uri)
 export class GeolocationController {
   constructor(private readonly geolocationService: GeolocationService) {}

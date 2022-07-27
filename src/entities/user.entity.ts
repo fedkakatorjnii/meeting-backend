@@ -20,6 +20,8 @@ import {
   IsOptional,
   Matches,
 } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+
 import { Room } from './room.entity';
 import { Message } from './message.entity';
 import { Geolocation } from './geolocation.entity';
@@ -29,12 +31,21 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @ApiProperty({
+    example: 'guest',
+    required: true,
+    description: 'The unique name of the User',
+  })
   @Column({
     unique: true,
   })
   @IsString()
   username: string;
 
+  @ApiProperty({
+    example: 'Serega',
+    description: 'The first name of the User',
+  })
   @Column({
     nullable: true,
   })
@@ -42,6 +53,10 @@ export class User {
   @IsString()
   firstName: string;
 
+  @ApiProperty({
+    example: 'Ivanov',
+    description: 'The last name of the User',
+  })
   @Column({
     nullable: true,
   })
@@ -49,26 +64,34 @@ export class User {
   @IsString()
   lastName: string;
 
+  @ApiProperty({
+    example: 'test@test.ru',
+    description: 'The email of the User',
+  })
   @Column()
   @IsNotEmpty()
   @IsEmail()
   email: string;
 
+  @ApiProperty({ example: 'false' })
   @Column({ default: false })
   @IsOptional()
   @IsBoolean()
   isActive: boolean;
 
+  @ApiProperty({ example: 'false' })
   @Column({ default: false })
   @IsOptional()
   @IsBoolean()
   isDeleted: boolean;
 
+  @ApiProperty({ example: 'false' })
   @Column({ default: false })
   @IsOptional()
   @IsBoolean()
   isSuperuser: boolean;
 
+  @ApiProperty({ example: 'f0nI2nw/', description: 'The password of the User' })
   @Column('text')
   @IsNotEmpty()
   @IsString()

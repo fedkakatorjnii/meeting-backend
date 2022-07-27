@@ -33,6 +33,7 @@
     "@nestjs/passport": "^8.1.0",
     "@nestjs/platform-express": "^8.0.0",
     "@nestjs/platform-socket.io": "^8.2.6",
+    "@nestjs/swagger": "^6.0.4",
     "@nestjs/typeorm": "^8.0.3",
     "@nestjs/websockets": "^8.2.6",
     "@socket.io/redis-adapter": "^7.1.0",

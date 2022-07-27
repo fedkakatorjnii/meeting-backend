@@ -1,2 +1,2 @@
-export { CreateMessageDto } from './create-message.dto';
-export { PaginatedListMessageDto } from './paginated-list-message.dto';
+export * from './create-message.dto';
+export * from './paginated-list-message.dto';
