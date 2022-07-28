@@ -174,6 +174,7 @@ export class MessagesService {
     message.owner = owner;
     message.room = room;
     message.text = data.text;
+    message.readers = [];
 
     const errors = await validate(message);
 
