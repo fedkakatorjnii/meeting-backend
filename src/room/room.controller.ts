@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 
 import { getCurrentLinks } from 'src/shared/utils/pagination';
-import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { JwtAccessTokenGuard } from 'src/auth/guard/jwt-access-token.guard';
 import { PaginatedCollectionResponse } from 'src/types';
 import { AuthUser } from 'src/common/halpers';
 import { Room } from 'src/entities';
@@ -65,7 +65,7 @@ const uri = 'api/rooms';
 
 @ApiBearerAuth()
 @ApiTags('rooms')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAccessTokenGuard)
 @Controller(uri)
 export class RoomController {
   constructor(private readonly roomService: RoomService) {}

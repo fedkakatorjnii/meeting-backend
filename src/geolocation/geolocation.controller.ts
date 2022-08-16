@@ -9,7 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { JwtAccessTokenGuard } from 'src/auth/guard/jwt-access-token.guard';
 
 import { Geolocation } from 'src/entities';
 import { getPaginatedListMessageOption } from 'src/messages/utils';
@@ -27,7 +27,7 @@ const uri = 'api/geolocations';
 
 @ApiBearerAuth()
 @ApiTags('geolocations')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAccessTokenGuard)
 @Controller(uri)
 export class GeolocationController {
   constructor(private readonly geolocationService: GeolocationService) {}

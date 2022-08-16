@@ -2,9 +2,10 @@ import { Controller, Request, Post, UseGuards, Body } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { LocalAuthGuard } from './guard/local-auth.guard';
-import { JwtAuthGuard } from './guard/jwt-auth.guard';
+import { JwtRefreshTokenGuard } from './guard/jwt-refresh-token.guard';
+import { JwtRefreshTockenDTO } from './dto/jwt-refresh-token.dto';
+import { JwtAccessTockenDTO } from './dto/jwt-access-tocken.dto';
 import { AuthService } from './auth.service';
-import { GetTockenDto } from './dto';
 
 @ApiTags('auth')
 @Controller('api/auth')
@@ -13,13 +14,13 @@ export class AuthController {
 
   @UseGuards(LocalAuthGuard)
   @Post('token')
-  async login(@Body() createUserDto: GetTockenDto, @Request() req) {
+  async login(@Body() jwtAccessTockenDto: JwtAccessTockenDTO, @Request() req) {
     return this.authService.login(req.user);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtRefreshTokenGuard)
   @Post('refresh')
-  async refresh(@Request() req) {
+  async refresh(jwtRefreshTockenDto: JwtRefreshTockenDTO, @Request() req) {
     return this.authService.login(req.user);
   }
 }

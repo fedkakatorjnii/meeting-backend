@@ -21,7 +21,7 @@ import {
 } from '@nestjs/swagger';
 
 import { Public } from 'src/auth/constants';
-import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { JwtAccessTokenGuard } from 'src/auth/guard/jwt-access-token.guard';
 import { SafeUser } from 'src/common/types';
 import {
   getCurrentLinks,
@@ -58,7 +58,7 @@ const uri = 'api/users';
 
 @ApiBearerAuth()
 @ApiTags('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAccessTokenGuard)
 @Controller(uri)
 export class UserController {
   constructor(private readonly userService: UserService) {}

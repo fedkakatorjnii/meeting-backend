@@ -5,10 +5,11 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
+
 import { IS_PUBLIC_KEY } from '../constants';
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {
+export class JwtRefreshTokenGuard extends AuthGuard('jwt-refresh-token') {
   constructor(private reflector: Reflector) {
     super();
   }
@@ -26,7 +27,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
   handleRequest(err, user, info, ...rest) {
     if (err || !user) {
-      throw err || new UnauthorizedException('Необходимо авторизоваться.');
+      throw err || new UnauthorizedException('Невалидный токен.');
     }
 
     return user;

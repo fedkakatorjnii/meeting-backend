@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class GetTockenDto {
+export class JwtAccessTockenDTO {
   @ApiProperty()
   readonly username: string;
   @ApiProperty()

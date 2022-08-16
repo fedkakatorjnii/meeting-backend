@@ -12,7 +12,7 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from 'src/auth/auth.service';
-import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
+import { JwtAccessTokenGuard } from 'src/auth/guard/jwt-access-token.guard';
 import { getCurrentLinks } from 'src/shared/utils/pagination';
 import { Message } from 'src/entities';
 import { PaginatedCollectionResponse } from 'src/types';
@@ -36,7 +36,7 @@ const uri = 'api/messages';
 
 @ApiBearerAuth()
 @ApiTags('messages')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAccessTokenGuard)
 @Controller(uri)
 export class MessagesController {
   constructor(
