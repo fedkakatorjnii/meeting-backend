@@ -12,7 +12,7 @@ export class JwtRefreshTokenStrategy extends PassportStrategy(
 ) {
   constructor(private authService: AuthService) {
     super({
-      jwtFromRequest: ExtractJwt.fromBodyField('refresh_token'),
+      jwtFromRequest: ExtractJwt.fromBodyField('refresh'),
       ignoreExpiration: false,
       secretOrKey: process.env.JWT_REFRESH_TOKEN_SECRET,
     });

@@ -72,26 +72,26 @@ export class AuthService {
   }
 
   async login(user: any) {
-    return this.#getTokens({ username: user.username });
+    return this.#getTokens({ username: user.username, userId: user.id });
   }
 
   async refresh(user: any) {
-    return this.#getTokens({ username: user.username });
+    return this.#getTokens({ username: user.username, userId: user.id });
   }
 
-  async #getTokens(payload: { username: string }) {
-    const access_token = this.jwtService.sign(payload, {
+  async #getTokens(payload: { username: string; userId: number }) {
+    const access = this.jwtService.sign(payload, {
       secret: process.env.JWT_ACCESS_TOKEN_SECRET,
       expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME,
     });
-    const refresh_token = this.jwtService.sign(payload, {
+    const refresh = this.jwtService.sign(payload, {
       secret: process.env.JWT_REFRESH_TOKEN_SECRET,
       expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRATION_TIME,
     });
 
     return {
-      access_token,
-      refresh_token,
+      access,
+      refresh,
     };
   }
 }

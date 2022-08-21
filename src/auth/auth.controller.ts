@@ -20,7 +20,10 @@ export class AuthController {
 
   @UseGuards(JwtRefreshTokenGuard)
   @Post('refresh')
-  async refresh(jwtRefreshTockenDto: JwtRefreshTockenDTO, @Request() req) {
+  async refresh(
+    @Body() jwtRefreshTockenDto: JwtRefreshTockenDTO,
+    @Request() req,
+  ) {
     return this.authService.login(req.user);
   }
 }
