@@ -40,7 +40,7 @@ export class RedisPropagatorService {
     if (!isMessageToRoom(data)) return;
 
     return this.socketStateService
-      .getFromRoom(data.room, RedisSocketEventNames.chat)
+      .getFromRoom(data.room)
       .forEach((socket) => socket.emit(event, data));
   };
 
@@ -52,7 +52,7 @@ export class RedisPropagatorService {
     if (!isGeolocation(data)) return;
 
     return this.socketStateService
-      .getFromGateway(RedisSocketEventNames.geolocation)
+      .getGateways()
       .forEach((socket) => socket.emit(event, data));
   };
 

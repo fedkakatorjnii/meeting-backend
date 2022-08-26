@@ -9,7 +9,6 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
 import { AuthenticatedSocket } from '../socket-state/types';
-import { RedisSocketEventNames } from './redis-propagator.constants';
 import { RedisPropagatorService } from './redis-propagator.service';
 
 @Injectable()
@@ -28,7 +27,7 @@ export class RedisPropagatorInterceptor<T>
 
     return next.handle().pipe(
       tap((data) => {
-        if (data.target === RedisSocketEventNames.chat) {
+        if (data.event === 'msgToClient') {
           this.redisPropagatorService.propagateChatEvent({
             ...data,
             socketId: socket.id,
@@ -36,7 +35,7 @@ export class RedisPropagatorInterceptor<T>
           });
         }
 
-        if (data.target === RedisSocketEventNames.geolocation) {
+        if (data.event === 'geolocationToClient') {
           this.redisPropagatorService.propagateGeolocationEvent({
             ...data,
             socketId: socket.id,

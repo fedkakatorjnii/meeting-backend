@@ -40,9 +40,7 @@ export class RedisService {
         channel,
         JSON.stringify(value),
         (error, reply) => {
-          if (error) {
-            return reject(error);
-          }
+          if (error) return reject(error);
 
           return resolve(reply);
         },

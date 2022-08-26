@@ -4,55 +4,51 @@ import { AuthenticatedSocket } from './types';
 
 @Injectable()
 export class SocketStateService {
-  private socketState = new Map<
-    number,
-    Record<string, AuthenticatedSocket[]>
-  >();
+  private socketState = new Map<number, AuthenticatedSocket[]>();
 
   remove(userId: number, socket: Socket): boolean {
-    const gateways = this.socketState.get(userId) || {};
+    const gateways = this.socketState.get(userId) || [];
+    const newGateways = gateways.filter((s) => s.id !== socket.id);
 
-    if (!gateways) return true;
+    this.socketState.set(userId, newGateways);
 
-    for (const name in gateways) {
-      gateways[name] = gateways[name].filter((s) => s.id !== socket.id);
-    }
+    return true;
+  }
+
+  add(userId: number, socket: AuthenticatedSocket): boolean {
+    const gateways = this.socketState.get(userId) || [];
+
+    gateways.push(socket);
 
     this.socketState.set(userId, gateways);
 
     return true;
   }
 
-  add(userId: number, name: string, socket: AuthenticatedSocket): boolean {
-    const gateways = this.socketState.get(userId) || {};
-
-    gateways[name] = gateways[name] || [];
-
-    gateways[name].push(socket);
-
-    this.socketState.set(userId, gateways);
-
-    return true;
+  get(userId: number): AuthenticatedSocket[] {
+    return this.socketState.get(userId) || [];
   }
 
-  get(userId: number, name: string): AuthenticatedSocket[] {
-    const gateways = this.socketState.get(userId) || {};
-
-    return gateways[name] || [];
-  }
-
-  getFromRoom(roomId: number, name: string): AuthenticatedSocket[] {
+  getFromRoom(roomId: number): AuthenticatedSocket[] {
     const res: AuthenticatedSocket[] = [];
 
     this.socketState.forEach((gateways) => {
-      const sockets = gateways[name] || [];
-
-      res.push(
-        ...sockets.filter(
-          ({ auth: { consistsRooms, ownsRooms } }) =>
-            consistsRooms.includes(roomId) || ownsRooms.includes(roomId),
-        ),
+      const newGateways = gateways.filter(
+        ({ auth: { consistsRooms, ownsRooms } }) => {
+          return consistsRooms.includes(roomId) || ownsRooms.includes(roomId);
+        },
       );
+      res.push(...newGateways);
+    });
+
+    return res;
+  }
+
+  getGateways(): AuthenticatedSocket[] {
+    const res: AuthenticatedSocket[] = [];
+
+    this.socketState.forEach((gateways) => {
+      res.push(...gateways);
     });
 
     return res;

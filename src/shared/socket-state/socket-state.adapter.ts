@@ -51,11 +51,7 @@ export class SocketStateAdapter extends IoAdapter implements WebSocketAdapter {
   public bindClientConnect(server: Server, callback): void {
     server.on('connection', (socket: AuthenticatedSocket) => {
       if (socket.auth) {
-        this.socketStateService.add(
-          socket.auth.userId,
-          socket.data.target,
-          socket,
-        );
+        this.socketStateService.add(socket.auth.userId, socket);
 
         socket.on('disconnect', () => {
           this.socketStateService.remove(socket.auth.userId, socket);
