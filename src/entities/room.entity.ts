@@ -5,7 +5,7 @@ import {
   ManyToOne,
   OneToMany,
 } from 'typeorm';
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsDate } from 'class-validator';
 import { User } from './user.entity';
 import { Message } from './message.entity';
 
@@ -32,4 +32,21 @@ export class Room {
 
   @OneToMany(() => Message, (message) => message.room, { nullable: false })
   messages: Message[];
+
+  @Column({
+    nullable: false,
+    default: () => 'CURRENT_TIMESTAMP',
+    type: 'timestamp',
+  })
+  @IsOptional()
+  @IsDate()
+  createdAt: Date;
+
+  @Column({
+    nullable: true,
+    type: 'timestamp',
+  })
+  @IsOptional()
+  @IsDate()
+  updatedAt: Date;
 }

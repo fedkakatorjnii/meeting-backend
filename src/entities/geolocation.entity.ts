@@ -22,6 +22,11 @@ export class Geolocation {
   @IsNotEmpty()
   point: Point;
 
+  @ManyToOne(() => User, (user) => user.geolocations)
+  @JoinColumn()
+  @IsNotEmpty()
+  owner: User;
+
   @Column({
     nullable: false,
     default: () => 'CURRENT_TIMESTAMP',
@@ -29,10 +34,13 @@ export class Geolocation {
   })
   @IsOptional()
   @IsDate()
-  date: Date;
+  createdAt: Date;
 
-  @ManyToOne(() => User, (user) => user.geolocations)
-  @JoinColumn()
-  @IsNotEmpty()
-  owner: User;
+  @Column({
+    nullable: true,
+    type: 'timestamp',
+  })
+  @IsOptional()
+  @IsDate()
+  updatedAt: Date;
 }
