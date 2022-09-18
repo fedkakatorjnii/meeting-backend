@@ -1,5 +1,5 @@
-import { AnonMessage } from './anon-message.dto';
+import { SocketAnonMessage } from './anon-message.dto';
 
-export interface Message<T> extends AnonMessage<T> {
+export interface SocketMessage<T> extends SocketAnonMessage<T> {
   senderId: number;
 }

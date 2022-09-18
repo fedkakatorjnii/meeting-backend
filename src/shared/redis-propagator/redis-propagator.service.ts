@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { tap } from 'rxjs/operators';
 import { Server } from 'socket.io';
 
-import { isMessageToRoom } from '../utils/is-message-to-room';
+import { isResponseMessageToRoom } from '../utils/is-message-to-room';
 import { isGeolocation } from '../utils/is-geolocation';
 import { RedisService } from '../redis/redis.service';
 import { SocketStateService } from '../socket-state/socket-state.service';
@@ -37,7 +37,7 @@ export class RedisPropagatorService {
   private consumeChatEvent = (eventInfo: RedisSocketEventSendDTO): void => {
     const { event, data } = eventInfo;
 
-    if (!isMessageToRoom(data)) return;
+    if (!isResponseMessageToRoom(data)) return;
 
     return this.socketStateService
       .getFromRoom(data.room)

@@ -1,10 +1,15 @@
-import { Message } from './user-message.dto';
-import { AnonMessage } from './anon-message.dto';
+import { SocketMessage } from './user-message.dto';
+import { SocketAnonMessage } from './anon-message.dto';
+import { Message } from 'src/entities';
 
-export interface AnonMessageToRoom extends AnonMessage<string> {
+export interface AnonMessageToRoom extends SocketAnonMessage<string> {
   room: number;
 }
 
-export interface MessageToRoom extends Message<string> {
+export interface SocketMessageToRoom extends SocketMessage<string> {
+  room: number;
+}
+
+export interface ResponseSocketMessageToRoom extends SocketMessage<Message> {
   room: number;
 }

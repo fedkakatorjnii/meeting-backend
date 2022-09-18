@@ -9,7 +9,7 @@ import {
 import { Logger, UseInterceptors } from '@nestjs/common';
 import { Socket, Server } from 'socket.io';
 import { RedisPropagatorInterceptor } from 'src/shared/redis-propagator/redis-propagator.interceptor';
-import { MessageToRoom } from 'src/shared/redis/dto/message-to-room.dto';
+import { ResponseSocketMessageToRoom } from 'src/shared/redis/dto/message-to-room.dto';
 import { AuthenticatedSocket } from 'src/shared/socket-state/types';
 import { isAnonMessageToRoom } from 'src/shared/utils/is-message-to-room';
 import { MessagesService } from 'src/messages/messages.service';
@@ -45,7 +45,7 @@ export class MainGateway
   ): Promise<{
     event: 'msgToClient';
     target: RedisSocketEventNames;
-    data: MessageToRoom;
+    data: ResponseSocketMessageToRoom;
   }> {
     let data = payload;
 
@@ -55,7 +55,7 @@ export class MainGateway
 
     if (!isAnonMessageToRoom(data)) return;
 
-    await this.messagesService.create({
+    const message = await this.messagesService.create({
       text: data.message,
       ownerId: client.auth.userId,
       roomId: data.room,
@@ -65,7 +65,8 @@ export class MainGateway
       event: 'msgToClient',
       target: RedisSocketEventNames.chat,
       data: {
-        ...data,
+        message,
+        room: data.room,
         senderId: client.auth.userId,
       },
     };

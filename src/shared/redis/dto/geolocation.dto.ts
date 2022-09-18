@@ -1,6 +1,6 @@
-import { Message } from './user-message.dto';
-import { AnonMessage } from './anon-message.dto';
+import { SocketMessage } from './user-message.dto';
+import { SocketAnonMessage } from './anon-message.dto';
 
-export type AnonGeolocationMessate = AnonMessage<[number, number]>;
+export type AnonGeolocationMessate = SocketAnonMessage<[number, number]>;
 
-export type GeolocationMessate = Message<[number, number]>;
+export type GeolocationMessate = SocketMessage<[number, number]>;
