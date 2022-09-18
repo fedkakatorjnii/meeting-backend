@@ -38,16 +38,19 @@ export class GeolocationService {
     query: Partial<PaginatedListGeolocationDto>,
   ): Promise<PaginatedCollection<Geolocation>> {
     const { ownerId, _page, _page_size } = query;
-    const pagination = getPagination(query);
-    // const owner = this.#getUser(ownerId);
+    const { skip, take } = getPagination(query);
     const owner = await this.userService.find(ownerId);
 
-    const [items, total] = await this.geolocationRepository.findAndCount({
-      ...pagination,
-      where: {
-        owner,
-      },
-    });
+    const mainPrefix = 'geolocation';
+    const selectQueryBuilder = this.geolocationRepository
+      .createQueryBuilder(mainPrefix)
+      .where('geolocation.owner = :owner')
+      .setParameters({ owner: owner.id })
+      .skip(skip)
+      .take(take);
+
+    const [items, total] = await selectQueryBuilder.getManyAndCount();
+
     const page = _page;
     const size = _page_size;
 
@@ -69,7 +72,6 @@ export class GeolocationService {
   async create({ ownerId, coordinates }: CreateGeolocationDto) {
     const geolocation = new Geolocation();
 
-    // const owner = await this.#getUser(ownerId);
     const owner = await this.userService.find(ownerId);
     const point: Point = {
       coordinates,
@@ -77,7 +79,6 @@ export class GeolocationService {
     };
 
     geolocation.owner = owner;
-    geolocation.date = new Date();
     geolocation.point = point;
 
     const errors = await validate(geolocation);

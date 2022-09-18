@@ -27,8 +27,11 @@ export class RoomService {
     const ownsRoomIds = user.ownsRooms.map((item) => item.id);
     const consistsRoomIds = user.consistsRooms.map((item) => item.id);
     const roomIds = [...ownsRoomIds, ...consistsRoomIds];
+    const mainPrefix = 'room';
+
     const selectQueryBuilder = this.roomRepository
-      .createQueryBuilder('room')
+      .createQueryBuilder(mainPrefix)
+      .leftJoinAndSelect('room.owner', 'owner')
       .where('room.id = any(:roomIds)', { roomIds });
 
     const [items, total] = await selectQueryBuilder.getManyAndCount();
