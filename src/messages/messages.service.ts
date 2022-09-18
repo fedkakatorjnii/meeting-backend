@@ -4,18 +4,30 @@ import { Repository } from 'typeorm';
 import { validate } from 'class-validator';
 
 import { PaginatedCollection } from 'src/types';
-import { Message, Room, User } from 'src/entities';
+import { Message, User } from 'src/entities';
 import { UserService } from 'src/user/user.service';
 import { getLinks, getPagination } from 'src/shared/utils/pagination';
 import { RoomService } from 'src/room/room.service';
 
-import { PaginatedListMessageDto, CreateMessageDto } from './dto';
+import {
+  PaginatedListMessageDto,
+  CreateMessageDto,
+  PaginatedListRoomsMessageDto,
+  PaginatedListRoomMessageDto,
+} from './dto';
+import { getMessageColumns } from './halpers';
+
+interface ListToRoomItem {
+  roomId: number;
+  messages: PaginatedCollection<Message>;
+}
 
 enum ErrorMessages {
   USER_NOT_FOUND = 'Пользователь не найдена.',
   ROOM_NOT_FOUND = 'Комната не найдена.',
 }
 
+const mainPrefix = 'message';
 @Injectable()
 export class MessagesService {
   constructor(
@@ -43,27 +55,36 @@ export class MessagesService {
 
   async list(
     query: Partial<PaginatedListMessageDto>,
+    user: User,
   ): Promise<PaginatedCollection<Message>> {
     const { ownerId, roomId, _page, _page_size } = query;
-    const pagination = getPagination(query);
-    let owner: User | undefined = undefined;
-    let room: Room | undefined = undefined;
+    const { skip, take } = getPagination(query);
 
+    const selectQueryBuilder = this.messageRepository
+      .createQueryBuilder(mainPrefix)
+      .leftJoinAndSelect('message.owner', 'owner')
+      .leftJoinAndSelect('message.room', 'room')
+      .orderBy('message.id', 'DESC')
+      .skip(skip)
+      .take(take);
+
+    const roomIds = this.#getUserRooms(user);
+
+    if (roomIds.includes(roomId)) {
+      selectQueryBuilder
+        .andWhere('message.room = :room')
+        .setParameter('room', roomId);
+    }
     if (ownerId !== undefined) {
-      owner = await this.#getUser(ownerId);
+      selectQueryBuilder
+        .andWhere('message.owner = :owner')
+        .setParameter('owner', ownerId);
     }
 
-    if (roomId !== undefined) {
-      room = await this.#getRoomById(roomId);
-    }
+    const [items_, total] = await selectQueryBuilder.getManyAndCount();
+    // TODO подумать где лучше сортировать записи
+    const items = items_.sort((a, b) => a.id - b.id);
 
-    const [items, total] = await this.messageRepository.findAndCount({
-      ...pagination,
-      where: {
-        room,
-        owner,
-      },
-    });
     const page = _page;
     const size = _page_size;
 
@@ -91,10 +112,28 @@ export class MessagesService {
     );
   }
 
-  async find(id: number): Promise<Message | undefined> {
-    return this.messageRepository.findOne(id, {
-      // relations: ['owner', 'room'],
-    });
+  async find(messageId: number, user: User): Promise<Message | undefined> {
+    const columns = getMessageColumns(mainPrefix);
+    const roomIds = this.#getUserRooms(user);
+
+    const selectQueryBuilder = this.messageRepository
+      .createQueryBuilder(mainPrefix)
+      .select(columns)
+      .leftJoinAndSelect('message.owner', 'owner')
+      .leftJoinAndSelect('message.room', 'room')
+      .where('message.id= :messageId', { messageId });
+
+    const message = await selectQueryBuilder.getOne();
+
+    if (!message) throw new Error('Сообщение не найдено');
+    if (
+      !roomIds.includes(message.owner.id) &&
+      !roomIds.includes(message.room.id)
+    ) {
+      throw new Error('Сообщение не найдено');
+    }
+
+    return message;
   }
 
   async create(data: CreateMessageDto) {
@@ -111,6 +150,77 @@ export class MessagesService {
 
     if (errors.length > 0) throw errors;
 
-    return this.messageRepository.save(message);
+    const savedMessage = await this.messageRepository.save(message);
+
+    return savedMessage;
+  }
+
+  async listToRooms(
+    query: Partial<PaginatedListRoomsMessageDto>,
+    user: User,
+  ): Promise<Array<ListToRoomItem>> {
+    const messagesToRooms: Array<ListToRoomItem> = [];
+
+    const roomIds = this.#getUserRooms(user);
+
+    for (const roomId of roomIds) {
+      await this.#getRoomById(roomId);
+
+      const messages = await this.#listToRoom({ ...query, roomId });
+
+      messagesToRooms.push({
+        roomId,
+        messages,
+      });
+    }
+
+    return messagesToRooms;
+  }
+
+  async #listToRoom(
+    query: Partial<PaginatedListRoomMessageDto>,
+  ): Promise<PaginatedCollection<Message>> {
+    const { roomId, _page, _page_size } = query;
+    const { skip, take } = getPagination(query);
+    const columns = getMessageColumns(mainPrefix);
+
+    const selectQueryBuilder = this.messageRepository
+      .createQueryBuilder(mainPrefix)
+      .select(columns)
+      .leftJoinAndSelect('message.owner', 'owner')
+      .leftJoinAndSelect('message.room', 'room')
+      .where('message.room = :roomId', { roomId })
+      .orderBy('message.createdAt', 'DESC')
+      .skip(skip)
+      .take(take);
+
+    const [items_, total] = await selectQueryBuilder.getManyAndCount();
+    const items = items_.sort((a, b) => a.id - b.id);
+
+    const page = _page;
+    const size = _page_size;
+
+    const links = getLinks({
+      page,
+      size,
+      total,
+    });
+
+    return {
+      items,
+      total,
+      page,
+      size,
+      links,
+    };
+  }
+
+  #getUserRooms(user: User) {
+    const { ownsRooms, consistsRooms } = user;
+
+    const ownsRoomIds = ownsRooms.map((room) => room.id);
+    const consistsRoomIds = consistsRooms.map((room) => room.id);
+
+    return [...ownsRoomIds, ...consistsRoomIds];
   }
 }

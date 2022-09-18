@@ -13,7 +13,11 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from 'src/auth/auth.service';
 import { JwtAccessTokenGuard } from 'src/auth/guard/jwt-access-token.guard';
-import { getCurrentLinks } from 'src/shared/utils/pagination';
+import {
+  getPaginatedCollectionResponse,
+  getPaginationOption,
+} from 'src/shared/utils/pagination';
+import { AuthUser } from 'src/common/halpers';
 import { Message } from 'src/entities';
 import { PaginatedCollectionResponse } from 'src/types';
 
@@ -44,28 +48,6 @@ export class MessagesController {
     private readonly authService: AuthService,
   ) {}
 
-  @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  async find(@Param('id') id: string): Promise<Message> {
-    try {
-      const messageId = Number(id);
-
-      if (Number.isNaN(messageId)) {
-        throw new Error(ErrorMessagesFind.invalidId);
-      }
-
-      return this.messagesService.find(messageId);
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus.FORBIDDEN,
-          error: ErrorMessagesFind.general,
-        },
-        HttpStatus.FORBIDDEN,
-      );
-    }
-  }
-
   @Get('user/:id')
   @HttpCode(HttpStatus.OK)
   async findByUser(@Param('id') id: string): Promise<Message> {
@@ -82,28 +64,91 @@ export class MessagesController {
     }
   }
 
-  @Get()
+  @Get('rooms')
   @HttpCode(HttpStatus.OK)
-  async list(
+  async listToRooms(
     @Headers('host') host,
     @Query() query: PaginatedListMessageDto,
-  ): Promise<PaginatedCollectionResponse<Message>> {
+    @AuthUser() user,
+  ): Promise<Record<number, PaginatedCollectionResponse<Message>>> {
+    const messagesToRoomsList: Record<
+      number,
+      PaginatedCollectionResponse<Message>
+    > = {};
+
     try {
       const url = `${host}/${uri}`;
-      const messagePaginatedListOption = getPaginatedListMessageOption(query);
-
-      const { links, ...rest } = await this.messagesService.list(
+      const messagePaginatedListOption = getPaginationOption(query);
+      const messagesToRooms = await this.messagesService.listToRooms(
         messagePaginatedListOption,
+        user,
       );
 
-      const currentLinks = getCurrentLinks(url, links);
+      messagesToRooms.forEach(({ messages, roomId }) => {
+        messagesToRoomsList[roomId] = getPaginatedCollectionResponse(
+          url,
+          messages,
+        );
+      });
 
-      return { ...rest, ...currentLinks };
+      return messagesToRoomsList;
     } catch (error) {
       throw new HttpException(
         {
           status: HttpStatus.FORBIDDEN,
           error: ErrorMessagesList.general,
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async list(
+    @Headers('host') host,
+    @Query() query: PaginatedListMessageDto,
+    @AuthUser() user,
+  ): Promise<PaginatedCollectionResponse<Message>> {
+    try {
+      const url = `${host}/${uri}`;
+      const messagePaginatedListOption = getPaginatedListMessageOption(query);
+
+      const messages = await this.messagesService.list(
+        messagePaginatedListOption,
+        user,
+      );
+
+      return getPaginatedCollectionResponse(url, messages);
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: ErrorMessagesList.general,
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+  }
+
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  async find(@Param('id') id: string, @AuthUser() user): Promise<Message> {
+    try {
+      const messageId = Number(id);
+
+      if (Number.isNaN(messageId)) {
+        throw new Error(ErrorMessagesFind.invalidId);
+      }
+
+      const messages = await this.messagesService.find(messageId, user);
+
+      return messages;
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: ErrorMessagesFind.general,
         },
         HttpStatus.FORBIDDEN,
       );

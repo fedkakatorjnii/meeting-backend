@@ -3,6 +3,8 @@ import {
   PaginationLinks,
   QueryPagination,
   PaginationLinkProps,
+  PaginatedCollection,
+  PaginatedCollectionResponse,
 } from 'src/types';
 
 export const getTake = (pagination: Partial<Pagination>): number => {
@@ -123,4 +125,13 @@ export const getCurrentLinks = (
     previous,
     last,
   };
+};
+
+export const getPaginatedCollectionResponse = <T>(
+  url: string,
+  list: PaginatedCollection<T>,
+): PaginatedCollectionResponse<T> => {
+  const currentLinks = getCurrentLinks(url, list.links);
+
+  return { ...list, ...currentLinks };
 };

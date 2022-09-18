@@ -1,3 +1,6 @@
-export const getColumnsWithPrefix = (names: string[], prefix: string) => {
+export const getColumnsWithPrefix = <T extends string>(
+  names: T[],
+  prefix: string,
+) => {
   return names.map((name) => `${prefix}.${name}`);
 };
