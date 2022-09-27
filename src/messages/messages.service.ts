@@ -16,11 +16,7 @@ import {
   PaginatedListRoomMessageDto,
 } from './dto';
 import { getMessageColumns } from './halpers';
-
-interface ListToRoomItem {
-  roomId: number;
-  messages: PaginatedCollection<Message>;
-}
+import { MessagesCollectionToRoom } from './types';
 
 enum ErrorMessages {
   USER_NOT_FOUND = 'Пользователь не найдена.',
@@ -158,18 +154,19 @@ export class MessagesService {
   async listToRooms(
     query: Partial<PaginatedListRoomsMessageDto>,
     user: User,
-  ): Promise<Array<ListToRoomItem>> {
-    const messagesToRooms: Array<ListToRoomItem> = [];
+  ): Promise<MessagesCollectionToRoom[]> {
+    const messagesToRooms: MessagesCollectionToRoom[] = [];
 
     const roomIds = this.#getUserRooms(user);
 
     for (const roomId of roomIds) {
-      await this.#getRoomById(roomId);
+      const room = await this.#getRoomById(roomId);
 
       const messages = await this.#listToRoom({ ...query, roomId });
 
       messagesToRooms.push({
-        roomId,
+        // roomId,
+        room,
         messages,
       });
     }

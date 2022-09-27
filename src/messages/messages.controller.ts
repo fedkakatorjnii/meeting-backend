@@ -24,6 +24,7 @@ import { PaginatedCollectionResponse } from 'src/types';
 import { getPaginatedListMessageOption } from './utils';
 import { MessagesService } from './messages.service';
 import { PaginatedListMessageDto } from './dto';
+import { MessagesCollectionToRoomsResponse } from './types';
 
 enum ErrorMessagesFind {
   general = 'Не удалось получить сообщение.',
@@ -70,12 +71,7 @@ export class MessagesController {
     @Headers('host') host,
     @Query() query: PaginatedListMessageDto,
     @AuthUser() user,
-  ): Promise<Record<number, PaginatedCollectionResponse<Message>>> {
-    const messagesToRoomsList: Record<
-      number,
-      PaginatedCollectionResponse<Message>
-    > = {};
-
+  ): Promise<MessagesCollectionToRoomsResponse> {
     try {
       const url = `${host}/${uri}`;
       const messagePaginatedListOption = getPaginationOption(query);
@@ -84,14 +80,10 @@ export class MessagesController {
         user,
       );
 
-      messagesToRooms.forEach(({ messages, roomId }) => {
-        messagesToRoomsList[roomId] = getPaginatedCollectionResponse(
-          url,
-          messages,
-        );
-      });
-
-      return messagesToRoomsList;
+      return messagesToRooms.map(({ room, messages }) => ({
+        room,
+        messages: getPaginatedCollectionResponse(url, messages),
+      }));
     } catch (error) {
       throw new HttpException(
         {
