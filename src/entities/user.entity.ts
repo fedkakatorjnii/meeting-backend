@@ -73,6 +73,13 @@ export class User {
   @IsEmail()
   email: string;
 
+  @Column({
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  photo: string;
+
   @ApiProperty({ example: 'false' })
   @Column({ default: false })
   @IsOptional()

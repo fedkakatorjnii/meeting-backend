@@ -30,6 +30,13 @@ export class Room {
   @ManyToOne(() => User, (user) => user.ownsRooms)
   owner: User;
 
+  @Column({
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  photo: string;
+
   @OneToMany(() => Message, (message) => message.room, { nullable: false })
   messages: Message[];
 

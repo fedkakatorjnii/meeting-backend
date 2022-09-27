@@ -7,6 +7,7 @@ const safeUserColumns: SafeUserColumns = [
   'firstName',
   'lastName',
   'email',
+  'photo',
   'isActive',
   'isDeleted',
   'isSuperuser',
