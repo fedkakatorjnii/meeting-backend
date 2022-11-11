@@ -15,11 +15,11 @@ export class Message {
   @IsString()
   text: string;
 
-  @ManyToOne(() => User, (user) => user.messages)
+  @ManyToOne(() => User, (user) => user.messages, { onDelete: 'CASCADE' })
   @IsNotEmpty()
   owner: User;
 
-  @ManyToOne(() => Room, (user) => user.messages)
+  @ManyToOne(() => Room, (user) => user.messages, { onDelete: 'CASCADE' })
   @IsNotEmpty()
   room: Room;
 

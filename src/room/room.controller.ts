@@ -150,7 +150,7 @@ export class RoomController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string): Promise<void> {
+  async remove(@Param('id') id: number): Promise<void> {
     try {
       return this.roomService.remove(id);
     } catch (error) {

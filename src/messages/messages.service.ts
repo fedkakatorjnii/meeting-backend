@@ -151,6 +151,10 @@ export class MessagesService {
     return savedMessage;
   }
 
+  async remove(id: string): Promise<void> {
+    await this.messageRepository.delete(id);
+  }
+
   async listToRooms(
     query: Partial<PaginatedListRoomsMessageDto>,
     user: User,

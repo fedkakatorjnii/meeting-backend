@@ -98,7 +98,7 @@ export class RoomService {
     return this.roomRepository.save(room);
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: number): Promise<void> {
     await this.roomRepository.delete(id);
   }
 

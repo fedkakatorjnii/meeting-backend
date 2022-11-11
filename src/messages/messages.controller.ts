@@ -8,6 +8,7 @@ import {
   HttpException,
   Param,
   Headers,
+  Delete,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
@@ -37,6 +38,10 @@ enum ErrorMessagesList {
   general = 'Не удалось получить список сообщений.',
 }
 
+enum ErrorMessageRemove {
+  general = 'Не удалось удалить сообщение.',
+}
+
 const uri = 'api/messages';
 
 @ApiBearerAuth()
@@ -59,6 +64,22 @@ export class MessagesController {
         {
           status: HttpStatus.FORBIDDEN,
           error: ErrorMessagesFind.general,
+        },
+        HttpStatus.FORBIDDEN,
+      );
+    }
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id') id: string): Promise<void> {
+    try {
+      return this.messagesService.remove(id);
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus.FORBIDDEN,
+          error: ErrorMessageRemove.general,
         },
         HttpStatus.FORBIDDEN,
       );
