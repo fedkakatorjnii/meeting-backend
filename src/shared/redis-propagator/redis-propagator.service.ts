@@ -8,6 +8,7 @@ import { RedisService } from '../redis/redis.service';
 import { SocketStateService } from '../socket-state/socket-state.service';
 import { RedisSocketEventSendDTO } from '../redis/dto/socket-event-send.dto';
 import { RedisSocketEventNames } from './redis-propagator.constants';
+import { isResponseDeleteMessageFromRoom } from '../utils/is-delete-message-from-room';
 
 @Injectable()
 export class RedisPropagatorService {
@@ -18,8 +19,13 @@ export class RedisPropagatorService {
     private readonly redisService: RedisService,
   ) {
     this.redisService
-      .fromEvent(RedisSocketEventNames.chat)
-      .pipe(tap(this.consumeChatEvent))
+      .fromEvent(RedisSocketEventNames.sendMessage)
+      .pipe(tap(this.consumeSendMessageEvent))
+      .subscribe();
+
+    this.redisService
+      .fromEvent(RedisSocketEventNames.deleteMessage)
+      .pipe(tap(this.consumeDeleteMessageEvent))
       .subscribe();
 
     this.redisService
@@ -34,10 +40,26 @@ export class RedisPropagatorService {
     return this;
   }
 
-  private consumeChatEvent = (eventInfo: RedisSocketEventSendDTO): void => {
+  private consumeSendMessageEvent = (
+    eventInfo: RedisSocketEventSendDTO,
+  ): void => {
     const { event, data } = eventInfo;
 
     if (!isResponseMessageToRoom(data)) return;
+
+    return this.socketStateService
+      .getFromRoom(data.room)
+      .forEach((socket) => socket.emit(event, data));
+  };
+
+  private consumeDeleteMessageEvent = (
+    eventInfo: RedisSocketEventSendDTO,
+  ): void => {
+    const { event, data } = eventInfo;
+
+    console.log('consumeDeleteMessageEvent', data);
+    if (!isResponseDeleteMessageFromRoom(data)) return;
+    console.log('DELETE OK', data);
 
     return this.socketStateService
       .getFromRoom(data.room)
@@ -56,10 +78,22 @@ export class RedisPropagatorService {
       .forEach((socket) => socket.emit(event, data));
   };
 
-  public propagateChatEvent(eventInfo: RedisSocketEventSendDTO): boolean {
+  public propagateDeleteMessageEvent(
+    eventInfo: RedisSocketEventSendDTO,
+  ): boolean {
     if (!eventInfo.userId) return false;
 
-    this.redisService.publish(RedisSocketEventNames.chat, eventInfo);
+    this.redisService.publish(RedisSocketEventNames.deleteMessage, eventInfo);
+
+    return true;
+  }
+
+  public propagateSendMessageEvent(
+    eventInfo: RedisSocketEventSendDTO,
+  ): boolean {
+    if (!eventInfo.userId) return false;
+
+    this.redisService.publish(RedisSocketEventNames.sendMessage, eventInfo);
 
     return true;
   }

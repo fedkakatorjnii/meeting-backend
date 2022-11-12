@@ -151,7 +151,7 @@ export class MessagesService {
     return savedMessage;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: number): Promise<void> {
     await this.messageRepository.delete(id);
   }
 

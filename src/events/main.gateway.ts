@@ -18,6 +18,8 @@ import { RedisSocketEventNames } from 'src/shared/redis-propagator/redis-propaga
 import { GeolocationService } from 'src/geolocation/geolocation.service';
 import { GeolocationMessate } from 'src/shared/redis/dto/geolocation.dto';
 import { isAnonGeolocation } from 'src/shared/utils/is-geolocation';
+import { ResponseSocketDeleteMessageFromRoom } from 'src/shared/redis/dto/anon-delete-message.dto';
+import { isAnonDeleteMessageFromRoom } from 'src/shared/utils/is-delete-message-from-room';
 
 @UseInterceptors(RedisPropagatorInterceptor)
 @WebSocketGateway({
@@ -47,6 +49,7 @@ export class MainGateway
     target: RedisSocketEventNames;
     data: ResponseSocketMessageToRoom;
   }> {
+    const { userId } = client.auth;
     let data = payload;
 
     if (typeof payload === 'string') {
@@ -54,20 +57,55 @@ export class MainGateway
     }
 
     if (!isAnonMessageToRoom(data)) return;
+    const { room } = data;
 
     const message = await this.messagesService.create({
       text: data.message,
-      ownerId: client.auth.userId,
-      roomId: data.room,
+      ownerId: userId,
+      roomId: room,
     });
 
     return {
       event: 'msgToClient',
-      target: RedisSocketEventNames.chat,
+      target: RedisSocketEventNames.sendMessage,
       data: {
         message,
-        room: data.room,
-        senderId: client.auth.userId,
+        room,
+        senderId: userId,
+      },
+    };
+  }
+
+  @SubscribeMessage('deleteMsgToServer')
+  async handleDeleteMessage(
+    client: AuthenticatedSocket,
+    payload: any,
+  ): Promise<{
+    event: 'deleteMsgToClient';
+    target: RedisSocketEventNames;
+    data: ResponseSocketDeleteMessageFromRoom;
+  }> {
+    console.log('deleteMsgToServer', payload);
+    const { userId } = client.auth;
+    let data = payload;
+
+    if (typeof payload === 'string') {
+      data = JSON.parse(payload);
+    }
+
+    if (!isAnonDeleteMessageFromRoom(data)) return;
+
+    const { room, message } = data;
+
+    await this.messagesService.remove(data.message);
+
+    return {
+      event: 'deleteMsgToClient',
+      target: RedisSocketEventNames.deleteMessage,
+      data: {
+        message,
+        room,
+        senderId: userId,
       },
     };
   }

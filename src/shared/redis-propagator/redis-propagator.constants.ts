@@ -1,4 +1,5 @@
 export enum RedisSocketEventNames {
-  chat = 'chat',
+  sendMessage = 'sendMessage',
+  deleteMessage = 'deleteMessage',
   geolocation = 'geolocation',
 }

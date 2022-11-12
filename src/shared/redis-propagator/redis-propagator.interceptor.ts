@@ -28,7 +28,15 @@ export class RedisPropagatorInterceptor<T>
     return next.handle().pipe(
       tap((data) => {
         if (data.event === 'msgToClient') {
-          this.redisPropagatorService.propagateChatEvent({
+          this.redisPropagatorService.propagateSendMessageEvent({
+            ...data,
+            socketId: socket.id,
+            ...socket.auth,
+          });
+        }
+
+        if (data.event === 'deleteMsgToClient') {
+          this.redisPropagatorService.propagateDeleteMessageEvent({
             ...data,
             socketId: socket.id,
             ...socket.auth,
