@@ -9,6 +9,7 @@ import { SocketStateService } from '../socket-state/socket-state.service';
 import { RedisSocketEventSendDTO } from '../redis/dto/socket-event-send.dto';
 import { RedisSocketEventNames } from './redis-propagator.constants';
 import { isResponseDeleteMessageFromRoom } from '../utils/is-delete-message-from-room';
+import { isResponseSocketReadMessagesFromRoom } from '../utils/is-read-messages';
 
 @Injectable()
 export class RedisPropagatorService {
@@ -21,6 +22,11 @@ export class RedisPropagatorService {
     this.redisService
       .fromEvent(RedisSocketEventNames.sendMessage)
       .pipe(tap(this.consumeSendMessageEvent))
+      .subscribe();
+
+    this.redisService
+      .fromEvent(RedisSocketEventNames.readMessages)
+      .pipe(tap(this.consumeReadMessagesEvent))
       .subscribe();
 
     this.redisService
@@ -52,14 +58,24 @@ export class RedisPropagatorService {
       .forEach((socket) => socket.emit(event, data));
   };
 
+  private consumeReadMessagesEvent = (
+    eventInfo: RedisSocketEventSendDTO,
+  ): void => {
+    const { event, data } = eventInfo;
+
+    if (!isResponseSocketReadMessagesFromRoom(data)) return;
+
+    return this.socketStateService
+      .getFromRoom(data.room)
+      .forEach((socket) => socket.emit(event, data));
+  };
+
   private consumeDeleteMessageEvent = (
     eventInfo: RedisSocketEventSendDTO,
   ): void => {
     const { event, data } = eventInfo;
 
-    console.log('consumeDeleteMessageEvent', data);
     if (!isResponseDeleteMessageFromRoom(data)) return;
-    console.log('DELETE OK', data);
 
     return this.socketStateService
       .getFromRoom(data.room)
@@ -94,6 +110,16 @@ export class RedisPropagatorService {
     if (!eventInfo.userId) return false;
 
     this.redisService.publish(RedisSocketEventNames.sendMessage, eventInfo);
+
+    return true;
+  }
+
+  public propagateReadMessagesEvent(
+    eventInfo: RedisSocketEventSendDTO,
+  ): boolean {
+    if (!eventInfo.userId) return false;
+
+    this.redisService.publish(RedisSocketEventNames.readMessages, eventInfo);
 
     return true;
   }

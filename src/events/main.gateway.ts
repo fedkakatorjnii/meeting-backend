@@ -13,13 +13,16 @@ import { ResponseSocketMessageToRoom } from 'src/shared/redis/dto/message-to-roo
 import { AuthenticatedSocket } from 'src/shared/socket-state/types';
 import { isAnonMessageToRoom } from 'src/shared/utils/is-message-to-room';
 import { MessagesService } from 'src/messages/messages.service';
-import { EventsService } from './events.service';
 import { RedisSocketEventNames } from 'src/shared/redis-propagator/redis-propagator.constants';
 import { GeolocationService } from 'src/geolocation/geolocation.service';
 import { GeolocationMessate } from 'src/shared/redis/dto/geolocation.dto';
 import { isAnonGeolocation } from 'src/shared/utils/is-geolocation';
 import { ResponseSocketDeleteMessageFromRoom } from 'src/shared/redis/dto/anon-delete-message.dto';
 import { isAnonDeleteMessageFromRoom } from 'src/shared/utils/is-delete-message-from-room';
+import { isAnonReadMessagedFromRoom } from 'src/shared/utils/is-read-messages';
+import { ResponseSocketReadMessagesFromRoom } from 'src/shared/redis/dto/read-messages-from-room.dto';
+import { UserService } from 'src/user/user.service';
+import { EventsService } from './events.service';
 
 @UseInterceptors(RedisPropagatorInterceptor)
 @WebSocketGateway({
@@ -33,6 +36,7 @@ export class MainGateway
   constructor(
     private eventsService: EventsService,
     private messagesService: MessagesService,
+    private userService: UserService,
     private geolocationService: GeolocationService,
   ) {}
 
@@ -76,6 +80,42 @@ export class MainGateway
     };
   }
 
+  @SubscribeMessage('readMsgToServer')
+  async handleReadMessage(
+    client: AuthenticatedSocket,
+    payload: any,
+  ): Promise<{
+    event: 'readMsgToClient';
+    target: RedisSocketEventNames;
+    data: ResponseSocketReadMessagesFromRoom;
+  }> {
+    const { userId } = client.auth;
+    let data = payload;
+
+    if (typeof payload === 'string') {
+      data = JSON.parse(payload);
+    }
+
+    if (!isAnonReadMessagedFromRoom(data)) return;
+
+    const { room: roomId, message: messageIds } = data;
+
+    const user = await this.userService.find(userId);
+    const message = await this.messagesService.read(messageIds, user);
+
+    if (!message.length) return;
+
+    return {
+      event: 'readMsgToClient',
+      target: RedisSocketEventNames.readMessages,
+      data: {
+        message: message,
+        room: roomId,
+        senderId: userId,
+      },
+    };
+  }
+
   @SubscribeMessage('deleteMsgToServer')
   async handleDeleteMessage(
     client: AuthenticatedSocket,
@@ -85,7 +125,6 @@ export class MainGateway
     target: RedisSocketEventNames;
     data: ResponseSocketDeleteMessageFromRoom;
   }> {
-    console.log('deleteMsgToServer', payload);
     const { userId } = client.auth;
     let data = payload;
 

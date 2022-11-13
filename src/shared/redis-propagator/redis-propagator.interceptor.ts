@@ -27,8 +27,18 @@ export class RedisPropagatorInterceptor<T>
 
     return next.handle().pipe(
       tap((data) => {
+        if (!data) return;
+
         if (data.event === 'msgToClient') {
           this.redisPropagatorService.propagateSendMessageEvent({
+            ...data,
+            socketId: socket.id,
+            ...socket.auth,
+          });
+        }
+
+        if (data.event === 'readMsgToClient') {
+          this.redisPropagatorService.propagateReadMessagesEvent({
             ...data,
             socketId: socket.id,
             ...socket.auth,

@@ -100,6 +100,37 @@ export class MessagesService {
     };
   }
 
+  async read(messageIds: number[], user: User) {
+    const selectQueryBuilder = this.messageRepository
+      .createQueryBuilder(mainPrefix)
+      .leftJoinAndSelect('message.owner', 'owner')
+      .leftJoinAndSelect('message.room', 'room')
+      .leftJoinAndSelect('message.readers', 'readers');
+
+    if (Array.isArray(messageIds)) {
+      selectQueryBuilder.andWhere('message.id IN (:...messageIds)', {
+        messageIds,
+      });
+    }
+
+    const items = await selectQueryBuilder.getMany();
+    const res: Message[] = [];
+
+    for (const item of items) {
+      const reader = item.readers.find((reader) => reader.id === user.id);
+
+      if (reader) break;
+
+      item.readers.push(user);
+
+      const message = await this.messageRepository.save(item);
+
+      res.push(message);
+    }
+
+    return res;
+  }
+
   async findByUser(id: string | number): Promise<Message | undefined> {
     const owner = await this.userService.find(id);
 
