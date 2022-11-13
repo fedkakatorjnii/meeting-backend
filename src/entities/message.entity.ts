@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  OneToMany,
+  ManyToMany,
+  JoinTable,
+} from 'typeorm';
 import { IsDate, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { User } from './user.entity';
 import { Room } from './room.entity';
@@ -18,6 +26,10 @@ export class Message {
   @ManyToOne(() => User, (user) => user.messages, { onDelete: 'CASCADE' })
   @IsNotEmpty()
   owner: User;
+
+  @ManyToMany(() => User, { nullable: false })
+  @JoinTable()
+  readers: User[];
 
   @ManyToOne(() => Room, (user) => user.messages, { onDelete: 'CASCADE' })
   @IsNotEmpty()

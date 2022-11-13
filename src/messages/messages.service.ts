@@ -60,6 +60,7 @@ export class MessagesService {
       .createQueryBuilder(mainPrefix)
       .leftJoinAndSelect('message.owner', 'owner')
       .leftJoinAndSelect('message.room', 'room')
+      .leftJoinAndSelect('message.readers', 'readers')
       .orderBy('message.id', 'DESC')
       .skip(skip)
       .take(take);
@@ -117,6 +118,7 @@ export class MessagesService {
       .select(columns)
       .leftJoinAndSelect('message.owner', 'owner')
       .leftJoinAndSelect('message.room', 'room')
+      .leftJoinAndSelect('message.readers', 'readers')
       .where('message.id= :messageId', { messageId });
 
     const message = await selectQueryBuilder.getOne();
@@ -190,6 +192,7 @@ export class MessagesService {
       .select(columns)
       .leftJoinAndSelect('message.owner', 'owner')
       .leftJoinAndSelect('message.room', 'room')
+      .leftJoinAndSelect('message.readers', 'readers')
       .where('message.room = :roomId', { roomId })
       .orderBy('message.createdAt', 'DESC')
       .skip(skip)
