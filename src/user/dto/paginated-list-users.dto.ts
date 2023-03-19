@@ -4,6 +4,9 @@ import { Pagination } from 'src/types';
 
 export class PaginatedListUsersDto implements Pagination {
   @ApiPropertyOptional()
+  roomIds: number[];
+
+  @ApiPropertyOptional()
   _page: number;
 
   @ApiPropertyOptional()

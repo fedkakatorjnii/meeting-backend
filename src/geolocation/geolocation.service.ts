@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { validate } from 'class-validator';
-import { Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { Point } from 'geojson';
 
-import { Geolocation } from 'src/entities';
+import { Geolocation, User } from 'src/entities';
 import { RoomService } from 'src/room/room.service';
 import { UserService } from 'src/user/user.service';
 import { PaginatedCollection } from 'src/types';
@@ -20,6 +20,7 @@ enum ErrorMessages {
 @Injectable()
 export class GeolocationService {
   constructor(
+    private entityManager: EntityManager,
     @InjectRepository(Geolocation)
     private readonly geolocationRepository: Repository<Geolocation>,
     private readonly userService: UserService,
@@ -36,18 +37,41 @@ export class GeolocationService {
 
   async list(
     query: Partial<PaginatedListGeolocationDto>,
+    user: User,
   ): Promise<PaginatedCollection<Geolocation>> {
-    const { ownerId, _page, _page_size } = query;
+    const { roomId, _page, _page_size } = query;
     const { skip, take } = getPagination(query);
-    const owner = await this.userService.find(ownerId);
+
+    let roomIds = [
+      ...user.ownsRooms.map((room) => room.id),
+      ...user.consistsRooms.map((room) => room.id),
+    ];
+
+    if (roomIds.includes(roomId)) {
+      roomIds = [roomId];
+    }
+
+    const users = await this.userService.list({
+      roomIds,
+      _page: 0,
+      _page_size: 0,
+    });
+    const userIds = [user.id, ...users.items.map((item) => item.id)];
 
     const mainPrefix = 'geolocation';
     const selectQueryBuilder = this.geolocationRepository
       .createQueryBuilder(mainPrefix)
-      .where('geolocation.owner = :owner')
-      .setParameters({ owner: owner.id })
-      .skip(skip)
-      .take(take);
+      .leftJoinAndSelect('geolocation.owner', 'owner')
+      .orderBy('geolocation.createdAt', 'DESC');
+
+    if (roomIds && roomIds.length) {
+      selectQueryBuilder.where('"owner"."id" IN (:...userIds)', {
+        userIds,
+      });
+    }
+
+    if (skip) selectQueryBuilder.skip(skip);
+    if (take) selectQueryBuilder.take(take);
 
     const [items, total] = await selectQueryBuilder.getManyAndCount();
 

@@ -150,14 +150,14 @@ export class MainGateway
   }
 
   @SubscribeMessage('geolocationToServer')
-  handleGeolocation(
+  async handleGeolocation(
     client: AuthenticatedSocket,
     payload: any,
-  ): {
+  ): Promise<{
     target: RedisSocketEventNames;
     event: 'geolocationToClient';
     data: GeolocationMessate;
-  } {
+  }> {
     try {
       let data = payload;
 
@@ -167,7 +167,7 @@ export class MainGateway
 
       if (!isAnonGeolocation(data)) return;
 
-      const geolocation = this.geolocationService.create({
+      const geolocation = await this.geolocationService.create({
         coordinates: data.message,
         ownerId: client.auth.userId,
       });
@@ -180,7 +180,16 @@ export class MainGateway
           senderId: client.auth.userId,
         },
       };
-    } catch (error) {}
+    } catch (e) {
+      const msg = `Ошибка создания geolocation.`;
+      let error = new Error(msg);
+
+      if (e instanceof Error) {
+        error = e;
+      }
+
+      console.error('geolocationToServer', error);
+    }
   }
 
   afterInit(server: Server) {

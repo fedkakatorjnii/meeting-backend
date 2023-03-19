@@ -9,7 +9,12 @@ import { getLinks, getPagination } from 'src/shared/utils/pagination';
 import { SafeUser } from 'src/common/types';
 import { getSafeUser } from 'src/common/halpers';
 
-import { CreateUserDto, UpdateUserDto, UserDto } from './dto';
+import {
+  CreateUserDto,
+  PaginatedListUsersDto,
+  UpdateUserDto,
+  UserDto,
+} from './dto';
 import { getUserColumns } from './halpers';
 
 @Injectable()
@@ -19,13 +24,15 @@ export class UserService {
     private readonly usersRepository: Repository<User>,
   ) {}
 
-  async list(query: Partial<Pagination>): Promise<PaginatedCollection<User>>;
   async list(
-    query: Partial<Pagination>,
+    query: Partial<PaginatedListUsersDto>,
+  ): Promise<PaginatedCollection<User>>;
+  async list(
+    query: Partial<PaginatedListUsersDto>,
     isSafe: true,
   ): Promise<PaginatedCollection<SafeUser>>;
-  async list(query: Partial<Pagination>, isSafe?: boolean) {
-    const { _page, _page_size } = query;
+  async list(query: Partial<PaginatedListUsersDto>, isSafe?: boolean) {
+    const { roomIds, _page, _page_size } = query;
     const { skip, take } = getPagination(query);
     const mainPrefix = 'user';
     const columns = getUserColumns(isSafe, mainPrefix);
@@ -34,9 +41,16 @@ export class UserService {
       .createQueryBuilder(mainPrefix)
       .select(columns)
       .leftJoinAndSelect('user.ownsRooms', 'owner')
-      .leftJoinAndSelect('user.consistsRooms', 'room')
-      .skip(skip)
-      .take(take);
+      .leftJoinAndSelect('user.consistsRooms', 'room');
+
+    if (roomIds && roomIds.length) {
+      selectQueryBuilder.where('"room"."id" IN (:...roomIds)', {
+        roomIds,
+      });
+    }
+
+    if (skip) selectQueryBuilder.skip(skip);
+    if (take) selectQueryBuilder.take(take);
 
     const [items, total] = await selectQueryBuilder.getManyAndCount();
 

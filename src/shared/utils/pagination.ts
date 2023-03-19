@@ -10,7 +10,7 @@ import {
 export const getTake = (pagination: Partial<Pagination>): number => {
   const { _page, _page_size } = pagination;
 
-  if (_page < 1 || _page_size < 0) return 10;
+  if (_page < 1 || _page_size < 0) return 0;
 
   return _page_size;
 };
@@ -18,17 +18,25 @@ export const getTake = (pagination: Partial<Pagination>): number => {
 export const getSkip = (pagination: Partial<Pagination>): number => {
   const { _page, _page_size } = pagination;
 
-  if (_page < 1 || _page_size < 0) return 1;
+  if (_page < 1 || _page_size < 0) return 0;
 
   return (_page - 1) * _page_size;
 };
 
-export const getNumber = (value: any) => {
+export const getNumber = (value: any, defaultValue?: number) => {
   const res = Number(value);
 
-  if (Number.isNaN(res)) return;
+  if (Number.isNaN(res)) return defaultValue;
 
   return res;
+};
+
+export const getNumberArray = (value: any): number[] | undefined => {
+  if (!Array.isArray(value)) return;
+
+  const res: number[] = value.filter((item) => typeof item === 'number');
+
+  return res.length ? res : undefined;
 };
 
 export const getPagination = (
@@ -40,12 +48,21 @@ export const getPagination = (
   return { skip, take };
 };
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_PAGE_SIZE = 10;
+
 export const getPaginationOption = (query: any): Partial<Pagination> => {
-  const { _page, _page_size } = query;
+  let _page = getNumber(query._page, DEFAULT_PAGE);
+  let _page_size = getNumber(query._page_size, DEFAULT_PAGE_SIZE);
+
+  if (!_page_size) {
+    _page = 0;
+    _page_size = 0;
+  }
 
   return {
-    _page: getNumber(_page) || 1,
-    _page_size: getNumber(_page_size) || 10,
+    _page: typeof _page === 'number' ? _page : DEFAULT_PAGE,
+    _page_size: typeof _page_size === 'number' ? _page_size : DEFAULT_PAGE_SIZE,
   };
 };
 

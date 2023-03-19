@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAccessTokenGuard } from 'src/auth/guard/jwt-access-token.guard';
+import { AuthUser } from 'src/common/halpers';
 
 import { Geolocation } from 'src/entities';
 import { getPaginatedListMessageOption } from 'src/messages/utils';
@@ -18,6 +19,7 @@ import { PaginatedCollectionResponse } from 'src/types';
 
 import { PaginatedListGeolocationDto } from './dto';
 import { GeolocationService } from './geolocation.service';
+import { getPaginatedListGeolocationOption } from './utils';
 
 enum ErrorGeolocationList {
   general = 'Не удалось получить список пользователей.',
@@ -37,13 +39,16 @@ export class GeolocationController {
   async list(
     @Headers('host') host,
     @Query() query: PaginatedListGeolocationDto,
+    @AuthUser() user,
   ): Promise<PaginatedCollectionResponse<Geolocation>> {
     try {
       const url = `${host}/${uri}`;
-      const messagePaginatedListOption = getPaginatedListMessageOption(query);
+      const geolocationPaginatedListOption =
+        getPaginatedListGeolocationOption(query);
 
       const { links, ...rest } = await this.geolocationService.list(
-        messagePaginatedListOption,
+        geolocationPaginatedListOption,
+        user,
       );
       const currentLinks = getCurrentLinks(url, links);
 

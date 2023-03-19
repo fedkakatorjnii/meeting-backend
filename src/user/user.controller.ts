@@ -23,15 +23,13 @@ import {
 import { Public } from 'src/auth/constants';
 import { JwtAccessTokenGuard } from 'src/auth/guard/jwt-access-token.guard';
 import { SafeUser } from 'src/common/types';
-import {
-  getCurrentLinks,
-  getPaginationOption,
-} from 'src/shared/utils/pagination';
-import { PaginatedCollectionResponse, Pagination } from 'src/types';
+import { getCurrentLinks } from 'src/shared/utils/pagination';
+import { PaginatedCollectionResponse } from 'src/types';
 
 import { CreateUserDto, PaginatedListUsersDto } from './dto';
 import { UserService } from './user.service';
 import { User } from 'src/entities';
+import { getPaginatedListUserOption } from './utils';
 
 enum ErrorMessagesCreate {
   general = 'Ошибка создания пользователя.',
@@ -72,7 +70,7 @@ export class UserController {
     const url = `${host}/${uri}`;
 
     try {
-      const pagination = getPaginationOption(query);
+      const pagination = getPaginatedListUserOption(query);
 
       const { links, ...rest } = await this.userService.list(pagination, true);
       const currentLinks = getCurrentLinks(url, links);
