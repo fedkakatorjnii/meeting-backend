@@ -61,9 +61,10 @@ export class MessagesService {
       .leftJoinAndSelect('message.owner', 'owner')
       .leftJoinAndSelect('message.room', 'room')
       .leftJoinAndSelect('message.readers', 'readers')
-      .orderBy('message.id', 'DESC')
-      .skip(skip)
-      .take(take);
+      .orderBy('message.id', 'DESC');
+
+    if (skip) selectQueryBuilder.skip(skip);
+    if (take) selectQueryBuilder.take(take);
 
     const roomIds = this.#getUserRooms(user);
 
@@ -226,9 +227,10 @@ export class MessagesService {
       .leftJoinAndSelect('message.room', 'room')
       .leftJoinAndSelect('message.readers', 'readers')
       .where('message.room = :roomId', { roomId })
-      .orderBy('message.createdAt', 'DESC')
-      .skip(skip)
-      .take(take);
+      .orderBy('message.createdAt', 'DESC');
+
+    if (skip) selectQueryBuilder.skip(skip);
+    if (take) selectQueryBuilder.take(take);
 
     const [items_, total] = await selectQueryBuilder.getManyAndCount();
     const items = items_.sort((a, b) => a.id - b.id);
