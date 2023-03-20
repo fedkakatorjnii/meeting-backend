@@ -17,6 +17,9 @@ enum ErrorMessages {
   roomNotFound = 'Комната не найдена.',
 }
 
+// минимальное расстояние для создания новой точки (метры)
+const MIN_DIST = 5;
+
 @Injectable()
 export class GeolocationService {
   constructor(
@@ -94,21 +97,56 @@ export class GeolocationService {
   }
 
   async create({ ownerId, coordinates }: CreateGeolocationDto) {
-    const geolocation = new Geolocation();
+    return this.entityManager.transaction(
+      async (transactionalEntityManager) => {
+        const newPointQuery = `
+        ST_SetSRID(
+          ST_MakePoint(${coordinates.join(', ')}), 4326
+        )
+        `;
+        // расстояние между последней и новой точками
+        const res: { st_distance: number }[] =
+          await transactionalEntityManager.query(
+            `SELECT 
+                 ST_Distance(
+                   ST_Transform("point", 3857),
+                   ST_Transform(
+                     ${newPointQuery},
+                     3857
+                   )
+                 )
+               FROM geolocations 
+               WHERE "ownerId" = 1 
+               ORDER BY "createdAt" DESC 
+               LIMIT 1;`,
+          );
+        const dist = res[0]?.st_distance || 0;
 
-    const owner = await this.userService.find(ownerId);
-    const point: Point = {
-      coordinates,
-      type: 'Point',
-    };
+        const owner = await this.userService.find(ownerId);
+        const point: Point = {
+          coordinates,
+          type: 'Point',
+        };
+        let geolocation = new Geolocation();
 
-    geolocation.owner = owner;
-    geolocation.point = point;
+        if (res.length && dist < MIN_DIST) {
+          geolocation = await this.geolocationRepository.findOne({
+            where: {
+              owner,
+            },
+            order: { createdAt: 'DESC' },
+          });
+        }
 
-    const errors = await validate(geolocation);
+        geolocation.owner = owner;
+        geolocation.point = point;
 
-    if (errors.length > 0) throw errors;
+        const errors = await validate(geolocation);
 
-    return this.geolocationRepository.save(geolocation);
+        if (errors.length > 0) throw errors;
+
+        return this.geolocationRepository.save(geolocation);
+      },
+    );
   }
 }
