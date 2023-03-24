@@ -4,6 +4,9 @@ import { Pagination } from 'src/types';
 
 export class PaginatedListGeolocationDto implements Pagination {
   @ApiPropertyOptional()
+  ownerId: number;
+
+  @ApiPropertyOptional()
   roomId: number;
 
   @ApiPropertyOptional()

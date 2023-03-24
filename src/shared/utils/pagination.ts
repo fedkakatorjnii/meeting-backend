@@ -107,6 +107,13 @@ const getPreviousLink = (config: PaginationLinkProps) => {
   return getPaginatedLink(prevPage, size);
 };
 
+export const getNullableLinks = (): PaginationLinks => ({
+  previous: null,
+  first: null,
+  next: null,
+  last: null,
+});
+
 export const getLinks = (config: PaginationLinkProps): PaginationLinks => {
   const first = getFirstLink(config);
   const last = getLastLink(config);

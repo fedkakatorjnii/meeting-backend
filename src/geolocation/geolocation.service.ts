@@ -8,7 +8,11 @@ import { Geolocation, User } from 'src/entities';
 import { RoomService } from 'src/room/room.service';
 import { UserService } from 'src/user/user.service';
 import { PaginatedCollection } from 'src/types';
-import { getLinks, getPagination } from 'src/shared/utils/pagination';
+import {
+  getLinks,
+  getNullableLinks,
+  getPagination,
+} from 'src/shared/utils/pagination';
 
 import { CreateGeolocationDto, PaginatedListGeolocationDto } from './dto';
 
@@ -42,7 +46,10 @@ export class GeolocationService {
     query: Partial<PaginatedListGeolocationDto>,
     user: User,
   ): Promise<PaginatedCollection<Geolocation>> {
-    const { roomId, _page, _page_size } = query;
+    const { ownerId, roomId, _page, _page_size } = query;
+    const page = _page;
+    const size = _page_size;
+
     const { skip, take } = getPagination(query);
 
     let roomIds = [
@@ -59,7 +66,20 @@ export class GeolocationService {
       _page: 0,
       _page_size: 0,
     });
-    const userIds = [user.id, ...users.items.map((item) => item.id)];
+
+    let userIds = [user.id, ...users.items.map((item) => item.id)];
+
+    if (userIds.includes(ownerId)) {
+      userIds = [ownerId];
+    } else if (ownerId !== undefined) {
+      return {
+        items: [],
+        total: 0,
+        page,
+        size,
+        links: getNullableLinks(),
+      };
+    }
 
     const mainPrefix = 'geolocation';
     const selectQueryBuilder = this.geolocationRepository
@@ -77,9 +97,6 @@ export class GeolocationService {
     if (take) selectQueryBuilder.take(take);
 
     const [items, total] = await selectQueryBuilder.getManyAndCount();
-
-    const page = _page;
-    const size = _page_size;
 
     const links = getLinks({
       page,
@@ -100,26 +117,26 @@ export class GeolocationService {
     return this.entityManager.transaction(
       async (transactionalEntityManager) => {
         const newPointQuery = `
-        ST_SetSRID(
-          ST_MakePoint(${coordinates.join(', ')}), 4326
-        )
-        `;
+          ST_SetSRID(
+            ST_MakePoint(${coordinates.join(', ')}), 4326
+          )`;
+        const distanceQuery = `
+          SELECT 
+              ST_Distance(
+                ST_Transform("point", 3857),
+                ST_Transform(
+                  ${newPointQuery},
+                  3857
+                )
+              )
+            FROM geolocations 
+            WHERE "ownerId" = 1 
+            ORDER BY "createdAt" DESC 
+            LIMIT 1;`;
+
         // расстояние между последней и новой точками
-        const res: { st_distance: number }[] =
-          await transactionalEntityManager.query(
-            `SELECT 
-                 ST_Distance(
-                   ST_Transform("point", 3857),
-                   ST_Transform(
-                     ${newPointQuery},
-                     3857
-                   )
-                 )
-               FROM geolocations 
-               WHERE "ownerId" = 1 
-               ORDER BY "createdAt" DESC 
-               LIMIT 1;`,
-          );
+        const res: [{ st_distance: number } | undefined] =
+          await transactionalEntityManager.query(distanceQuery);
         const dist = res[0]?.st_distance || 0;
 
         const owner = await this.userService.find(ownerId);
